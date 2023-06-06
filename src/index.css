@@ -1,35 +1,7 @@
-.App {
-  text-align: left;
-  padding: 20px;
-}
+@import url('https://fonts.googleapis.com/css2?family=Nunito&display=swap');
 
-.InputContainer {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.EditorContainer {
-  width: 45%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  text-align: left;
-}
-
-.ValidationResult {
-  margin-top: 20px;
-  font-weight: bold;
-  padding: 10px;
-  border-radius: 4px;
-}
-
-.valid {
-  background-color: #b7e8b0;
-  color: #006400;
-}
-
-.invalid {
-  background-color: #ffb5b5;
-  color: #8b0000;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }

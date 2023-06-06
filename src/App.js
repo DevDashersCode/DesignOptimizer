@@ -11,6 +11,7 @@ function App() {
   const [jsonInput, setJsonInput] = useState('');
   const [schemaInput, setSchemaInput] = useState('');
   const [validationResult, setValidationResult] = useState(null);
+  const [additionalProperties, setAdditionalProperties] = useState(true);
 
   const handleJsonInputChange = (event) => {
     setJsonInput(event.target.value);
@@ -20,10 +21,19 @@ function App() {
     setSchemaInput(event.target.value);
   };
 
+  const handleAdditionalPropertiesChange = (event) => {
+    setAdditionalProperties(event.target.checked);
+  };
+
   const handleTestClick = () => {
     try {
       const parsedJson = JSON.parse(jsonInput);
       const parsedSchema = JSON.parse(schemaInput);
+
+      if (!additionalProperties) {
+        parsedSchema.additionalProperties = false;
+      }
+
       const validate = ajv.compile(parsedSchema);
       const isValid = validate(parsedJson);
 
@@ -69,6 +79,16 @@ function App() {
             className="schemaInput"
           />
         </div>
+      </div>
+      <div className="container">
+        <label>
+          <input
+            type="checkbox"
+            checked={additionalProperties}
+            onChange={handleAdditionalPropertiesChange}
+          />
+          Allow Additional Properties
+        </label>
       </div>
       <div className="container">
         <button onClick={handleTestClick} className="testButton">
