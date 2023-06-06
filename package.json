@@ -12,7 +12,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-json-editor-ajrm": "^2.5.14",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "web-vitals": "^3.3.2"
   },
   "scripts": {
     "predeploy": "npm run build",
