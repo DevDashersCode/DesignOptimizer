@@ -1,17 +1,40 @@
 import React, { useState } from 'react';
-import Ajv from 'ajv/dist/2020';
+import Ajv from 'ajv';
+import draft6MetaSchema from 'ajv/lib/refs/json-schema-draft-06.json';
+import draft7MetaSchema from 'ajv/lib/refs/json-schema-draft-07.json';
+import Ajv2020 from 'ajv/dist/2020';
+
 import ajvFormats from 'ajv-formats';
 import './App.css';
 
-const ajv = new Ajv({ allErrors: true });
+const ajv = new Ajv({ allErrors: true, strict: false });
+const ajv2020 = new Ajv2020({ allErrors: true, strict: false });
+
+if (!ajv.getSchema('http://json-schema.org/draft-07/schema')) {
+  ajv.addMetaSchema(draft7MetaSchema);
+}
+
+if (!ajv.getSchema('http://json-schema.org/draft-06/schema')) {
+  ajv.addMetaSchema(draft6MetaSchema);
+}
+
 ajvFormats(ajv);
 ajv.addKeyword('example');
+
+const schemaVersions = [
+  { value: 'draft6', label: 'Draft 6' },
+  { value: 'draft7', label: 'Draft 7' },
+  { value: 'draft2020', label: 'Draft 2020' },
+];
 
 function App() {
   const [jsonInput, setJsonInput] = useState('');
   const [schemaInput, setSchemaInput] = useState('');
   const [validationResult, setValidationResult] = useState(null);
   const [additionalProperties, setAdditionalProperties] = useState(true);
+  const [selectedVersion, setSelectedVersion] = useState(
+    schemaVersions[2].value
+  );
 
   const handleJsonInputChange = (event) => {
     setJsonInput(event.target.value);
@@ -25,6 +48,10 @@ function App() {
     setAdditionalProperties(event.target.checked);
   };
 
+  const handleVersionChange = (event) => {
+    setSelectedVersion(event.target.value);
+  };
+
   const handleTestClick = () => {
     try {
       const parsedJson = JSON.parse(jsonInput);
@@ -34,7 +61,23 @@ function App() {
         parsedSchema.additionalProperties = false;
       }
 
-      const validate = ajv.compile(parsedSchema);
+      let validate;
+
+      switch (selectedVersion) {
+        case 'draft6':
+          validate = ajv.compile(parsedSchema);
+          break;
+        case 'draft7':
+          validate = ajv.compile(parsedSchema);
+          break;
+        case 'draft2020':
+          validate = ajv2020.compile(parsedSchema);
+          break;
+        default:
+          validate = ajv2020.compile(parsedSchema);
+          break;
+      }
+
       const isValid = validate(parsedJson);
 
       if (isValid) {
@@ -60,6 +103,18 @@ function App() {
 
   return (
     <>
+      <div className="container">
+        <div className="inputContainer">
+          <h3>Schema Version</h3>
+          <select value={selectedVersion} onChange={handleVersionChange}>
+            {schemaVersions.map((version) => (
+              <option key={version.value} value={version.value}>
+                {version.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="container">
         <div className="inputContainer">
           <h3>JSON Input</h3>

@@ -20,7 +20,7 @@ h3 {
 .jsonInput,
 .schemaInput {
   width: 95%;
-  height: 70vh;
+  height: 50vh;
   padding: 10px;
   font-family: monospace;
 }
