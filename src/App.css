@@ -25,9 +25,7 @@ h3 {
   font-family: monospace;
 }
 
-.testButton {
-  display: block;
-  margin-top: 20px;
+.button {
   padding: 10px 20px;
   font-size: 16px;
   background-color: #007bff;
@@ -53,4 +51,17 @@ h3 {
 .validationResult.error {
   background-color: #f8d7da;
   color: #721c24;
+}
+
+.generatContainer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.headerBackground {
+  background-color: #c3e6cb;
+  color: #155724;
 }

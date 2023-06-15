@@ -6,6 +6,8 @@ import Ajv2020 from 'ajv/dist/2020';
 
 import ajvFormats from 'ajv-formats';
 import './App.css';
+import { GenerateSchema } from './helpers/generateSchema';
+import { GenerateJSON } from './helpers/generateJson';
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 const ajv2020 = new Ajv2020({ allErrors: true, strict: false });
@@ -30,7 +32,7 @@ const schemaVersions = [
 function App() {
   const [jsonInput, setJsonInput] = useState('');
   const [schemaInput, setSchemaInput] = useState('');
-  const [validationResult, setValidationResult] = useState(null);
+  const [result, setResult] = useState(null);
   const [additionalProperties, setAdditionalProperties] = useState(true);
   const [selectedVersion, setSelectedVersion] = useState(
     schemaVersions[2].value
@@ -81,7 +83,7 @@ function App() {
       const isValid = validate(parsedJson);
 
       if (isValid) {
-        setValidationResult('Validation successful!');
+        setResult('Success: Both JSON and JSON Schema are valid');
       } else {
         const errorMessages = validate.errors.map((error) => {
           if (error.keyword === 'additionalProperties') {
@@ -93,16 +95,53 @@ function App() {
           }
         });
 
-        setValidationResult('Validation failed: ' + errorMessages.join(', '));
+        setResult('Validation failed: ' + errorMessages.join(', '));
       }
     } catch (error) {
       console.error('Error parsing JSON or schema:', error);
-      setValidationResult('Error parsing JSON or schema');
+      setResult('Error parsing JSON or schema');
+    }
+  };
+
+  const handleGenerateSchema = () => {
+    try {
+      const parsedJson = JSON.parse(jsonInput);
+      const options = {
+        required: true,
+        exemple: true,
+      };
+      const schema = GenerateSchema(0, 'root', parsedJson, '', options);
+      setSchemaInput(schema);
+      setJsonInput(JSON.stringify(parsedJson, null, 2));
+      setSelectedVersion('draft7');
+      setResult('Success: JSON Schema generated successfully');
+    } catch (error) {
+      console.error('Error generating schema:', error);
+      setSchemaInput(null);
+      setResult(`Failed to generate JSON Schema ${error}`);
+    }
+  };
+
+  const handleGenerateJson = () => {
+    try {
+      const parsedSchema = JSON.parse(schemaInput);
+      const options = {
+        required: true,
+      };
+      const jsonData = GenerateJSON(1, parsedSchema, options);
+      setJsonInput(jsonData);
+      setSchemaInput(JSON.stringify(parsedSchema, null, 2));
+      setResult('Success: JSON generated successfully');
+    } catch (error) {
+      console.error('Error generating schema:', error);
+      setJsonInput(null);
+      setResult(`Failed to generate JSON Schema ${error}`);
     }
   };
 
   return (
     <>
+      <h2>JSON Schema Validator and Generator</h2>
       <div className="container">
         <div className="inputContainer">
           <h3>Schema Version</h3>
@@ -117,7 +156,12 @@ function App() {
       </div>
       <div className="container">
         <div className="inputContainer">
-          <h3>JSON Input</h3>
+          <div className="generatContainer">
+            <h3 className="headerBackground ">JSON Input</h3>
+            <button className="button" onClick={handleGenerateSchema}>
+              Generate Schema
+            </button>
+          </div>
           <textarea
             value={jsonInput}
             onChange={handleJsonInputChange}
@@ -126,7 +170,12 @@ function App() {
           />
         </div>
         <div className="inputContainer">
-          <h3>Schema Input</h3>
+          <div className="generatContainer">
+            <h3 className="headerBackground ">Schema Input</h3>
+            <button className="button" onClick={handleGenerateJson}>
+              Generate JSON
+            </button>
+          </div>
           <textarea
             value={schemaInput}
             onChange={handleSchemaInputChange}
@@ -146,21 +195,19 @@ function App() {
         </label>
       </div>
       <div className="container">
-        <button onClick={handleTestClick} className="testButton">
+        <button onClick={handleTestClick} className="button">
           Validate
         </button>
       </div>
       <div className="container">
-        {validationResult !== null && (
+        {result !== null && (
           <div>
             <p
               className={`validationResult ${
-                validationResult.startsWith('Validation successful!')
-                  ? 'success'
-                  : 'error'
+                result.startsWith('Success:') ? 'success' : 'error'
               }`}
             >
-              {validationResult}
+              {result}
             </p>
           </div>
         )}

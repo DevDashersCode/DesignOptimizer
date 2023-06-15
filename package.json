@@ -9,9 +9,9 @@
     "@testing-library/user-event": "^13.5.0",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
+    "randexp": "^0.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-json-editor-ajrm": "^2.5.14",
     "react-scripts": "5.0.1",
     "web-vitals": "^3.3.2"
   },
