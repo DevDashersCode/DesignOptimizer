@@ -5,7 +5,8 @@ export const GenerateSchema = (
   name,
   jsonObject,
   consolidateName,
-  options
+  options,
+  version
 ) => {
   const jsonString = JSON.stringify(jsonObject);
   const tab = '	'.repeat(level + 1);
@@ -14,10 +15,9 @@ export const GenerateSchema = (
   let jsonSchema = '{\n';
   if (level === 0) {
     jsonSchema += tab + '"definitions": {},\n';
-    jsonSchema +=
-      tab + '"$schema": "http://json-schema.org/draft-07/schema#", \n';
+    jsonSchema += tab + `"$schema": "${version}", \n`;
   } else {
-    jsonSchema += tab + '"$id": "#' + consolidateName + name + '", \n';
+    // jsonSchema += tab + '"$id": "#' + consolidateName + name + '", \n';
   }
   jsonSchema +=
     tab +
@@ -30,29 +30,29 @@ export const GenerateSchema = (
   switch (type) {
     case 'boolean':
       jsonSchema += tab + '"type": "boolean",\n';
-      if (options?.exemple)
+      if (options?.example)
         jsonSchema +=
           tab + '"examples": [\n' + tab + '	' + jsonString + '\n' + tab + '],\n';
       jsonSchema += tab + '"default": true\n' + tabClose + '}';
       break;
     case 'string':
       jsonSchema += tab + '"type": "string",\n';
-      jsonSchema += tab + '"default": "",\n';
-      if (options?.exemple)
+      jsonSchema += tab + '"default": ""\n';
+      if (options?.example)
         jsonSchema +=
-          tab + '"examples": [\n' + tab + '	' + jsonString + '\n' + tab + '],\n';
-      jsonSchema += tab + '"pattern": "^.*$"\n' + tabClose + '}';
+          tab + ',"examples": [\n' + tab + '	' + jsonString + '\n' + tab + ']\n';
+      jsonSchema += tab + '' + tabClose + '}';
       break;
     case 'integer':
       jsonSchema += tab + '"type": "integer",\n';
-      if (options?.exemple)
+      if (options?.example)
         jsonSchema +=
           tab + '"examples": [\n' + tab + '	' + jsonString + '\n' + tab + '],\n';
       jsonSchema += tab + '"default": 0\n' + tabClose + '}';
       break;
     case 'number':
       jsonSchema += tab + '"type": "number",\n';
-      if (options?.exemple)
+      if (options?.example)
         jsonSchema +=
           tab + '"examples": [\n' + tab + '	' + jsonString + '\n' + tab + '],\n';
       jsonSchema += tab + '"default": 0.0\n' + tabClose + '}';

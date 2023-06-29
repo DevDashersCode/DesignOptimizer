@@ -9,9 +9,13 @@
     "@testing-library/user-event": "^13.5.0",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
+    "lodash": "^4.17.21",
+    "papaparse": "^5.4.1",
     "randexp": "^0.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-dropzone": "^14.2.3",
+    "react-router-dom": "^6.14.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^3.3.2"
   },
