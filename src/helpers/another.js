@@ -1,3 +1,4 @@
+// import { source } from './mappingSource';
 import { camelCase } from 'lodash';
 
 const getKeyIfKeyExists = (key, source) => {
@@ -79,14 +80,16 @@ const convertKeys = (obj, source) => {
         convertedData.push(...nestedResult.mappingDetails);
       }
     } else if (Array.isArray(source[keyValue])) {
+      let values = '';
       source[keyValue].forEach((k) => {
         newKey = camelCase(k);
         converted[newKey] = obj[key].trim();
-        convertedData.push({
-          from: key,
-          to: newKey,
-          value: obj[key].trim(),
-        });
+        values = values + ',' + k;
+      });
+      convertedData.push({
+        from: key,
+        to: values.replace(/(^,)|(,$)/g, ''),
+        value: obj[key].trim(),
       });
     } else {
       const keys = key.split('_');
@@ -119,3 +122,55 @@ export const convertToJsonMapper = (data, userTemplate) => {
   const convertedData = convertKeys(dataObj, source);
   return convertedData;
 };
+
+// const convertKeys = (obj) => {
+//   if (typeof obj !== 'object' || obj === null) {
+//     return obj;
+//   }
+
+//   if (Array.isArray(obj)) {
+//     return obj.map(convertKeys);
+//   }
+//   const convertedData = [];
+//   const converted = {};
+//   for (const key in obj) {
+//     let newKey = '';
+//     const keyValue = key.toUpperCase();
+
+//     if (Array.isArray(source[keyValue])) {
+//       let values = '';
+//       source[keyValue].forEach((k) => {
+//         newKey = camelCase(k);
+//         converted[newKey] = obj[key].trim();
+//         values = values + ',' + k;
+//       });
+//       convertedData.push({
+//         from: key,
+//         to: values.replace(/(^,)|(,$)/g, ''),
+//         value: obj[key].trim(),
+//       });
+//     } else {
+//       const keys = key.split('_');
+//       // eslint-disable-next-line no-loop-func
+//       keys.forEach((k) => {
+//         if (newKey) {
+//           newKey += '-';
+//         }
+//         const keyData = getKeyIfKeyExists(k);
+//         newKey += keyData !== undefined ? source[keyData] : camelCase(k);
+//       });
+//       newKey = camelCase(newKey);
+//       converted[newKey] = obj[key].trim();
+//       convertedData.push({
+//         from: key,
+//         to: newKey,
+//         value: obj[key].trim(),
+//       });
+//     }
+//   }
+//   console.log('final converted', converted);
+//   return {
+//     mappingDetails: convertedData,
+//     converted,
+//   };
+// };
