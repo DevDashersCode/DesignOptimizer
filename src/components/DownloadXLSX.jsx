@@ -33,14 +33,11 @@ const updateDataInExcel = (dataObj, uploadedWorkbook) => {
       uploadedWorkbook.SheetNames[0]
     );
 
-    // Insert the new data rows with headers
+    // Insert the new data rows
     dataObj.forEach((data, index) => {
       const row = Object.keys(data).map((key) => data[key]);
       updatedWorksheet.splice(insertRowIndex + index, 0, row);
     });
-
-    const headers = Object.keys(dataObj[0]);
-    updatedWorksheet.splice(insertRowIndex, 0, headers);
 
     // Convert the updated worksheet data back to a worksheet object
     const worksheetData = XLSX.utils.aoa_to_sheet(updatedWorksheet);

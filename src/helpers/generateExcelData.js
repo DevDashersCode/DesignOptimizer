@@ -26,11 +26,12 @@ const GeneratePreparedExcel = (data) => {
     data.forEach((d) => {
       const data = {
         Prepared: d.to,
-        DataType: `${typeof d.from}`,
-        'Destinamtion Nullable': 'Yes',
-        Example: d.value,
+        ToDataType: `${typeof d.from}`,
+        'Destinamtion Nullable': 'As is',
         Source: d.from,
-        'Source Nullable': 'Yes',
+        // 'Source Nullable': 'Yes',
+        FromDataType: `${typeof d.from}`,
+        Example: d.value,
       };
 
       preparedExcelData.push(data);
