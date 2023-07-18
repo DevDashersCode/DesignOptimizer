@@ -318,6 +318,18 @@ const Upload = () => {
     dragDropLabel = <p>Please select raw file</p>;
   }
 
+  const nextDisabled = () => {
+    if (activeStep === 0) {
+      return !(userTemplate !== null);
+    }
+
+    if (activeStep === 1) {
+      return !(downloadExcelFile ? excelTemplateFileName !== '' : true);
+    }
+
+    return true;
+  };
+
   return (
     <>
       <div className="prepared-container ">
@@ -595,7 +607,7 @@ const Upload = () => {
                     className="step-button"
                     style={{ marginLeft: '8px' }}
                     onClick={handleNext}
-                    disabled={activeStep === 2}
+                    disabled={nextDisabled()}
                   >
                     Next
                   </button>
