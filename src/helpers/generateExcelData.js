@@ -1,5 +1,4 @@
 const GenerateRawExcel = (data) => {
-  console.log(data);
   if (data) {
     const rawExcelData = [];
     for (const [key, value] of Object.entries(data?.message?.data)) {
@@ -14,8 +13,6 @@ const GenerateRawExcel = (data) => {
 
       rawExcelData.push(data);
     }
-
-    console.log(rawExcelData);
     return rawExcelData;
   }
 };
@@ -26,18 +23,17 @@ const GeneratePreparedExcel = (data) => {
     data.forEach((d) => {
       const data = {
         Prepared: d.to,
-        ToDataType: `${typeof d.from}`,
-        'Destinamtion Nullable': 'As is',
+        ToDataType: d.from ? `${typeof d.from}` : '',
+        'Destinamtion Nullable': d.from ? 'As is' : '',
         Source: d.from,
         // 'Source Nullable': 'Yes',
-        FromDataType: `${typeof d.from}`,
-        Example: d.value,
+        FromDataType: d.from ? `${typeof d.from}` : '',
+        Example: d.from ? d.value : '',
       };
 
       preparedExcelData.push(data);
     });
 
-    console.log(preparedExcelData);
     return preparedExcelData;
   }
 };

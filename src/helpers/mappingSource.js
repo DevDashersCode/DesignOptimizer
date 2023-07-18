@@ -1,9 +1,4 @@
 export const source = {
-  // TRN_ID: 'trainId',
-  // TRN_Type: 'trainType',
-  // TRN_SECT: 'trainSection',
-  // TRN_SYM: 'trainSymbol',
-  // TRN_DAY: 'trainDay',
   STN_333: [
     'stationSCAC',
     'stationFSAC',
@@ -20,10 +15,6 @@ export const source = {
     'stationCountryCode',
     'stationAbbrevation',
   ],
-  // LOCO_INIT: 'locoIdentifier',
-  // LOCO_NUMB: 'locoIdentifier',
-  // EQP_INIT: 'equipmentIdentifier',
-  // EQP_NUMB: 'equipmentIdentifier',
   ARR: 'arrival',
   TRN: 'train',
   STN: 'station',

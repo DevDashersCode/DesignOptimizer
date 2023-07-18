@@ -35,7 +35,7 @@ h3 {
 
 .button {
   padding: 10px 20px;
-  font-size: 16px;
+  font-size: 14px;
   background-color: #007bff;
   color: #fff;
   border: none;
@@ -177,7 +177,125 @@ h3 {
   background-color: #a40f26;
 }
 
-.mappingContainer {
+/* .mappingContainer {
   display: grid;
   grid-template-columns: 2fr 1fr;
+} */
+.mappingContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 10px;
+}
+
+.column {
+  display: flex;
+  /* flex-direction: column; */
+  max-height: 300px;
+  overflow: auto;
+  font-size: 14px;
+}
+
+.addMapping {
+  font-size: 14px;
+  max-height: 300px;
+  overflow: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: self-start;
+}
+
+.mappingContainer > div {
+  flex: 1;
+  margin-right: 10px;
+}
+.steps-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  border: 2px solid gray;
+  background-color: white;
+  margin: 1rem;
+}
+
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+  margin-bottom: 20px;
+}
+
+.step {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.stepContent {
+  margin-bottom: 20px;
+  height: 40vh;
+  width: 100%;
+  margin: 50px;
+}
+
+.step-button-container {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+}
+
+.step-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #cc0200;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.conversion-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.prepared-container {
+  border: 2px solid #cc0200;
+  height: 90vh;
+  background-color: white;
+}
+
+.textareaContainer {
+  flex: 1;
+  display: flex;
+}
+
+.textarea {
+  flex: 1;
+  resize: vertical;
+  height: 300px;
+}
+
+.parentContainer {
+  display: flex;
+  align-items: stretch; /* Adjust the alignment based on your needs */
+}
+
+.firstPortion {
+  flex: 1;
+  /* Apply additional styles for the first portion */
+}
+
+.secondPortion {
+  flex: 1;
+  /* Apply additional styles for the second portion */
+}
+
+.marginTop {
+  margin-top: 10px;
 }

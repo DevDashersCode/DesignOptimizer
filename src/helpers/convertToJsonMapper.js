@@ -23,16 +23,16 @@ const convertKeys = (obj, source) => {
   if (typeof obj !== 'object' || obj === null) {
     return obj;
   }
-  // console.log(obj);
-  if (Array.isArray(obj)) {
-    console.log(obj);
+  if (Array.isArray(obj) && obj.length > 0) {
     if (
       obj.every((item) => typeof item === 'number') ||
       obj.every((item) => typeof item !== 'string')
     ) {
       return obj;
     } else {
-      return obj.map((item) => convertKeys(item, source));
+      // return obj.map((item) => convertKeys(item, source));
+      // taking only the 1 obj from array
+      return convertKeys(obj[0], source);
     }
   }
 
@@ -43,24 +43,25 @@ const convertKeys = (obj, source) => {
     let newKey = '';
     const keyValue = key;
 
-    if (typeof obj[key] === 'object') {
-      if (Array.isArray(obj[key])) {
-        console.log(obj[key]);
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      if (Array.isArray(obj[key]) && obj[key].length > 0) {
         if (
           obj[key].every((item) => typeof item !== 'number') &&
           obj[key].every((item) => typeof item !== 'string')
         ) {
-          const nestedArrayResult = obj[key].map((nestedObj) =>
-            convertKeys(nestedObj, source)
-          );
-          converted[camelCase(key)] = nestedArrayResult.map(
-            (nestedResult) => nestedResult.converted
-          );
-          convertedData.push(
-            ...nestedArrayResult.flatMap(
-              (nestedResult) => nestedResult.mappingDetails
-            )
-          );
+          // const nestedArrayResult = obj[key].map((nestedObj) =>
+          //   convertKeys(nestedObj, source)
+          // );
+          // taking only the 1st object in array
+          converted[camelCase(obj[key])] = obj[key][0];
+          convertedData.push({
+            from: '',
+            to: camelCase(key),
+            value: '',
+          });
+          const nestedArrayResult = convertKeys(obj[key][0], source);
+          converted[camelCase(key)] = nestedArrayResult.converted;
+          convertedData.push(...nestedArrayResult.mappingDetails);
         } else {
           let newKey = camelCase(key);
           converted[newKey] = obj[key];
@@ -74,6 +75,12 @@ const convertKeys = (obj, source) => {
         //   convertKeys(nestedObj, source)
         // );
       } else {
+        converted[camelCase(key)] = obj[key];
+        convertedData.push({
+          from: '',
+          to: camelCase(key),
+          value: '',
+        });
         const nestedResult = convertKeys(obj[key], source);
         converted[camelCase(key)] = nestedResult.converted;
         convertedData.push(...nestedResult.mappingDetails);

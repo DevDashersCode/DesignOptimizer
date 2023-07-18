@@ -24,9 +24,7 @@ const convertKeys = (obj, source) => {
   if (typeof obj !== 'object' || obj === null) {
     return obj;
   }
-  // console.log(obj);
   if (Array.isArray(obj)) {
-    console.log(obj);
     if (
       obj.every((item) => typeof item === 'number') ||
       obj.every((item) => typeof item !== 'string')
@@ -46,7 +44,6 @@ const convertKeys = (obj, source) => {
 
     if (typeof obj[key] === 'object') {
       if (Array.isArray(obj[key])) {
-        console.log(obj[key]);
         if (
           obj[key].every((item) => typeof item !== 'number') &&
           obj[key].every((item) => typeof item !== 'string')

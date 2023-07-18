@@ -12,7 +12,6 @@ import {
 } from '../helpers/generateExcelData';
 import convertToCSV from '../helpers/convertToCSV';
 import DownloadCSV from './DownloadCSV';
-import { camelCase } from 'lodash';
 import { read } from 'xlsx';
 import DownloadXLSX from './DownloadXLSX';
 
@@ -20,7 +19,7 @@ const convertDropdown = [
   { id: 1, value: 'raw', label: 'Raw' },
   { id: 2, value: 'prepared', label: 'Prepared' },
 ];
-console.log(camelCase('MaintenanceNotification'));
+
 const templateDropdown = [
   { id: 1, value: 'no', label: 'No' },
   { id: 2, value: 'yes', label: 'Yes' },
@@ -38,6 +37,7 @@ const Upload = () => {
   const [rawSchema, setRawSchema] = useState(null);
   const [fileName, setFileName] = useState('');
   const [templateFileName, setTemplateFileName] = useState('');
+  const [excelTemplateFileName, setExcelTemplateFileName] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(
     templateDropdown[0].value
   );
@@ -47,6 +47,15 @@ const Upload = () => {
   const [downloadExcelFile, setDownloadExcelFile] = useState(false);
   const [uploadedWorkbook, setUploadedWorkbook] = useState(null);
   const [excelData, setExcelData] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
+
+  const handleNext = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
 
   const parseFile = useCallback((file) => {
     Papa.parse(file, {
@@ -67,7 +76,6 @@ const Upload = () => {
       setDownloadableCSVData('');
       setExcelData(null);
       acceptedFiles.forEach((file) => {
-        console.log(file.type);
         const currentFileName = file.name.split('.')[0].toLowerCase();
         if (file.type === 'text/csv' && selectedConversion === 'raw') {
           parseFile(file);
@@ -95,18 +103,15 @@ const Upload = () => {
 
           reader.readAsText(file);
         }
-        console.log(userTemplate);
         if (
           file.type === 'application/json' &&
           selectedConversion === 'prepared' &&
           userTemplate === null
         ) {
           const reader = new FileReader();
-          console.log(reader);
           reader.onload = () => {
             const content = reader.result;
             const data = JSON.parse(content);
-            console.log(data);
             setUserTemplate(data);
             setTemplateFileName(file.name);
           };
@@ -117,14 +122,12 @@ const Upload = () => {
           file.type ===
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         ) {
-          console.log(file);
           const reader = new FileReader();
           reader.onload = (event) => {
             const data = new Uint8Array(event.target.result);
-            console.log(data);
             const workbook = read(data, { type: 'array' });
             setUploadedWorkbook(workbook);
-            console.log(workbook);
+            setExcelTemplateFileName(file.name);
           };
 
           reader.readAsArrayBuffer(file);
@@ -252,6 +255,7 @@ const Upload = () => {
     setRawSchema(null);
     setUserTemplate(null);
     setTemplateFileName('');
+    setExcelTemplateFileName('');
     setMappingDetails(null);
     setDownloadableCSVData('');
     setExcelData(null);
@@ -315,18 +319,291 @@ const Upload = () => {
   }
 
   return (
-    <div>
-      <div className="conversionDropDown">
-        <p>Select conversion</p>
-        <select value={selectedConversion} onChange={onConversionHandler}>
-          {convertDropdown.map((version) => (
-            <option key={version.value} value={version.value}>
-              {version.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      {selectedConversion === 'prepared' && (
+    <>
+      <div className="prepared-container ">
+        <div>
+          <div className="conversionDropDown">
+            <p>Select conversion</p>
+            <select value={selectedConversion} onChange={onConversionHandler}>
+              {convertDropdown.map((version) => (
+                <option key={version.value} value={version.value}>
+                  {version.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {selectedConversion === 'prepared' && (
+            <div className="steps-container">
+              <div className="stepper">
+                <div
+                  className="step"
+                  style={{
+                    backgroundColor: activeStep === 0 ? '#CC0200' : '#E0E0E0',
+                  }}
+                >
+                  1
+                </div>
+                <div
+                  className="step"
+                  style={{
+                    backgroundColor: activeStep === 1 ? '#CC0200' : '#E0E0E0',
+                  }}
+                >
+                  2
+                </div>
+                <div
+                  className="step"
+                  style={{
+                    backgroundColor: activeStep === 2 ? '#CC0200' : '#E0E0E0',
+                  }}
+                >
+                  3
+                </div>
+              </div>
+              <div className="stepContent">
+                {activeStep === 0 && (
+                  <div>
+                    <div className="conversionDropDown">
+                      <p>Do you have template mapping ?</p>
+                      <select
+                        value={selectedTemplate}
+                        onChange={onTemplateHandler}
+                      >
+                        {templateDropdown.map((template) => (
+                          <option key={template.value} value={template.value}>
+                            {template.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {templateFileName && (
+                      <p>
+                        You have selected tempalate mapping: {templateFileName}
+                      </p>
+                    )}
+                    {selectedConversion === 'prepared' &&
+                      selectedTemplate === 'no' && (
+                        <div>
+                          <AddMapping />
+                        </div>
+                      )}
+
+                    {(selectedConversion === 'raw' ||
+                      (selectedConversion === 'prepared' &&
+                        selectedTemplate === 'yes')) &&
+                      !userTemplate && (
+                        <div
+                          {...getRootProps({
+                            className: `dropzone 
+          ${isDragAccept && 'dropzoneAccept'} 
+          ${isDragReject && 'dropzoneReject'}`,
+                          })}
+                        >
+                          <input
+                            {...getInputProps()}
+                            onClick={() => setDownloadFile(false)}
+                          />
+                          {isDragActive ? (
+                            <p>Drop the files here ...</p>
+                          ) : (
+                            `Drag 'n' drop template file here, or click to select template file`
+                          )}
+                        </div>
+                      )}
+                  </div>
+                )}
+                {activeStep === 1 && (
+                  <>
+                    <div>
+                      {templateFileName && (
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={downloadExcelFile}
+                            onChange={() =>
+                              setDownloadExcelFile(!downloadExcelFile)
+                            }
+                          />
+                          <span className="checkBoxLabel">
+                            Wanted to download mapping excel file{' '}
+                          </span>
+                        </label>
+                      )}
+                      {excelTemplateFileName && downloadExcelFile && (
+                        <p>
+                          You have selected excel tempalate mapping:{' '}
+                          {excelTemplateFileName}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      {(selectedConversion === 'raw' ||
+                        (selectedConversion === 'prepared' &&
+                          selectedTemplate === 'yes')) &&
+                        downloadExcelFile &&
+                        userTemplate &&
+                        !uploadedWorkbook && (
+                          <div
+                            {...getRootProps({
+                              className: `dropzone 
+          ${isDragAccept && 'dropzoneAccept'} 
+          ${isDragReject && 'dropzoneReject'}`,
+                            })}
+                          >
+                            <input
+                              {...getInputProps()}
+                              onClick={() => setDownloadFile(false)}
+                            />
+                            {isDragActive ? (
+                              <p>Drop the files here ...</p>
+                            ) : (
+                              `Drag 'n' drop excel template file here, or click to select excel template file`
+                            )}
+                          </div>
+                        )}
+                    </div>
+                  </>
+                )}
+                {activeStep === 2 && (
+                  <div>
+                    {(selectedConversion === 'raw' ||
+                      (selectedConversion === 'prepared' &&
+                        selectedTemplate === 'yes')) && (
+                      <>
+                        <div>
+                          <p>Please select raw file</p>
+                        </div>
+                        <div
+                          {...getRootProps({
+                            className: `dropzone 
+          ${isDragAccept && 'dropzoneAccept'} 
+          ${isDragReject && 'dropzoneReject'}`,
+                          })}
+                        >
+                          <input
+                            {...getInputProps()}
+                            onClick={() => setDownloadFile(false)}
+                          />
+                          {isDragActive ? (
+                            <p>Drop the files here ...</p>
+                          ) : (
+                            dragDropText
+                          )}
+                        </div>
+                      </>
+                    )}
+                    {selectedConversion === 'prepared' && (
+                      <div className="conversionDropDown">
+                        <div>
+                          {downloadFile && (
+                            <DownloadJSON
+                              jsonData={finalData}
+                              title={'Download JSON'}
+                              fileName={fileName}
+                            />
+                          )}
+                        </div>
+                        <div>
+                          {downloadFile &&
+                            preparedSchema &&
+                            selectedConversion === 'prepared' && (
+                              <DownloadJSON
+                                jsonData={preparedSchema}
+                                title={'Download Prepared Schema'}
+                                fileName={`${
+                                  fileName.split('-')[0]
+                                }-event-prepared-schema-v1-0`}
+                              />
+                            )}
+                        </div>
+                        <div>
+                          {downloadFile &&
+                            preparedSchema &&
+                            selectedConversion === 'prepared' &&
+                            downloadableCSVData && (
+                              <DownloadCSV
+                                csvData={downloadableCSVData}
+                                title={'Download prepared mapping CSV'}
+                                fileName={'prepared-mapping.csv'}
+                              />
+                            )}
+                        </div>
+
+                        {downloadFile &&
+                          rawSchema &&
+                          selectedConversion === 'raw' && (
+                            <DownloadJSON
+                              jsonData={rawSchema}
+                              title={'Download Raw Schema'}
+                              fileName={`${
+                                fileName.split('-')[0]
+                              }-event-raw-schema-v1-0`}
+                            />
+                          )}
+                        {downloadFile &&
+                          rawSchema &&
+                          selectedConversion === 'raw' &&
+                          downloadableCSVData && (
+                            <DownloadCSV
+                              csvData={downloadableCSVData}
+                              title={'Download raw mapping CSV'}
+                              fileName={'raw-mapping.csv'}
+                            />
+                          )}
+
+                        {downloadFile &&
+                          rawSchema &&
+                          downloadableCSVData &&
+                          selectedConversion === 'raw' &&
+                          downloadExcelFile &&
+                          uploadedWorkbook &&
+                          excelData && (
+                            <DownloadXLSX
+                              data={excelData}
+                              workbook={uploadedWorkbook}
+                            />
+                          )}
+
+                        {downloadFile &&
+                          preparedSchema &&
+                          downloadableCSVData &&
+                          selectedConversion === 'prepared' &&
+                          downloadExcelFile &&
+                          uploadedWorkbook &&
+                          excelData && (
+                            <DownloadXLSX
+                              data={excelData}
+                              workbook={uploadedWorkbook}
+                            />
+                          )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="step-button-container">
+                <button
+                  className="step-button"
+                  style={{ marginRight: '8px' }}
+                  disabled={activeStep === 0}
+                  onClick={handleBack}
+                >
+                  Back
+                </button>
+                {activeStep !== 2 && (
+                  <button
+                    className="step-button"
+                    style={{ marginLeft: '8px' }}
+                    onClick={handleNext}
+                    disabled={activeStep === 2}
+                  >
+                    Next
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          {/* {selectedConversion === 'prepared' && (
         <div className="conversionDropDown">
           <p>Do you have template mapping ?</p>
           <select value={selectedTemplate} onChange={onTemplateHandler}>
@@ -337,11 +614,11 @@ const Upload = () => {
             ))}
           </select>
         </div>
-      )}
-      {templateFileName && (
+      )} */}
+          {/* {templateFileName && (
         <p>You have selected tempalate mapping: {templateFileName}</p>
-      )}
-      {templateFileName && (
+      )} */}
+          {/* {templateFileName && (
         <label>
           <input
             type="checkbox"
@@ -352,9 +629,9 @@ const Upload = () => {
             Wanted to download mapping excel file{' '}
           </span>
         </label>
-      )}
-      {dragDropLabel}
-      {(selectedConversion === 'raw' ||
+      )} */}
+          {/* {dragDropLabel} */}
+          {/* {(selectedConversion === 'raw' ||
         (selectedConversion === 'prepared' && selectedTemplate === 'yes')) && (
         <div
           {...getRootProps({
@@ -366,85 +643,106 @@ const Upload = () => {
           <input {...getInputProps()} onClick={() => setDownloadFile(false)} />
           {isDragActive ? <p>Drop the files here ...</p> : dragDropText}
         </div>
-      )}
-      {selectedConversion === 'prepared' && selectedTemplate === 'no' && (
+      )} */}
+          {/* {selectedConversion === 'prepared' && selectedTemplate === 'no' && (
         <AddMapping />
-      )}
-      <div className="conversionDropDown">
-        <div>
-          {downloadFile && (
-            <DownloadJSON
-              jsonData={finalData}
-              title={'Download JSON'}
-              fileName={fileName}
-            />
-          )}
+      )} */}
         </div>
         <div>
-          {downloadFile &&
-            preparedSchema &&
-            selectedConversion === 'prepared' && (
+          {selectedConversion === 'raw' && (
+            <div
+              {...getRootProps({
+                className: `dropzone 
+          ${isDragAccept && 'dropzoneAccept'} 
+          ${isDragReject && 'dropzoneReject'}`,
+              })}
+            >
+              <input
+                {...getInputProps()}
+                onClick={() => setDownloadFile(false)}
+              />
+              {isDragActive ? <p>Drop the files here ...</p> : dragDropText}
+            </div>
+          )}
+        </div>
+        {selectedConversion === 'raw' && (
+          <div className="conversionDropDown">
+            <div>
+              {downloadFile && (
+                <DownloadJSON
+                  jsonData={finalData}
+                  title={'Download JSON'}
+                  fileName={fileName}
+                />
+              )}
+            </div>
+            <div>
+              {downloadFile &&
+                preparedSchema &&
+                selectedConversion === 'prepared' && (
+                  <DownloadJSON
+                    jsonData={preparedSchema}
+                    title={'Download Prepared Schema'}
+                    fileName={`${
+                      fileName.split('-')[0]
+                    }-event-prepared-schema-v1-0`}
+                  />
+                )}
+            </div>
+            <div>
+              {downloadFile &&
+                preparedSchema &&
+                selectedConversion === 'prepared' &&
+                downloadableCSVData && (
+                  <DownloadCSV
+                    csvData={downloadableCSVData}
+                    title={'Download prepared mapping CSV'}
+                    fileName={'prepared-mapping.csv'}
+                  />
+                )}
+            </div>
+
+            {downloadFile && rawSchema && selectedConversion === 'raw' && (
               <DownloadJSON
-                jsonData={preparedSchema}
-                title={'Download Prepared Schema'}
-                fileName={`${
-                  fileName.split('-')[0]
-                }-event-prepared-schema-v1-0`}
+                jsonData={rawSchema}
+                title={'Download Raw Schema'}
+                fileName={`${fileName.split('-')[0]}-event-raw-schema-v1-0`}
               />
             )}
-        </div>
-        <div>
-          {downloadFile &&
-            preparedSchema &&
-            selectedConversion === 'prepared' &&
-            downloadableCSVData && (
-              <DownloadCSV
-                csvData={downloadableCSVData}
-                title={'Download prepared mapping CSV'}
-                fileName={'prepared-mapping.csv'}
-              />
-            )}
-        </div>
+            {downloadFile &&
+              rawSchema &&
+              selectedConversion === 'raw' &&
+              downloadableCSVData && (
+                <DownloadCSV
+                  csvData={downloadableCSVData}
+                  title={'Download raw mapping CSV'}
+                  fileName={'raw-mapping.csv'}
+                />
+              )}
 
-        {downloadFile && rawSchema && selectedConversion === 'raw' && (
-          <DownloadJSON
-            jsonData={rawSchema}
-            title={'Download Raw Schema'}
-            fileName={`${fileName.split('-')[0]}-event-raw-schema-v1-0`}
-          />
+            {downloadFile &&
+              rawSchema &&
+              downloadableCSVData &&
+              selectedConversion === 'raw' &&
+              downloadExcelFile &&
+              uploadedWorkbook &&
+              excelData && (
+                <DownloadXLSX data={excelData} workbook={uploadedWorkbook} />
+              )}
+
+            {downloadFile &&
+              preparedSchema &&
+              downloadableCSVData &&
+              selectedConversion === 'prepared' &&
+              downloadExcelFile &&
+              uploadedWorkbook &&
+              excelData && (
+                <DownloadXLSX data={excelData} workbook={uploadedWorkbook} />
+              )}
+          </div>
         )}
-        {downloadFile &&
-          rawSchema &&
-          selectedConversion === 'raw' &&
-          downloadableCSVData && (
-            <DownloadCSV
-              csvData={downloadableCSVData}
-              title={'Download raw mapping CSV'}
-              fileName={'raw-mapping.csv'}
-            />
-          )}
-
-        {downloadFile &&
-          rawSchema &&
-          downloadableCSVData &&
-          selectedConversion === 'raw' &&
-          downloadExcelFile &&
-          uploadedWorkbook &&
-          excelData && (
-            <DownloadXLSX data={excelData} workbook={uploadedWorkbook} />
-          )}
-
-        {downloadFile &&
-          preparedSchema &&
-          downloadableCSVData &&
-          selectedConversion === 'prepared' &&
-          downloadExcelFile &&
-          uploadedWorkbook &&
-          excelData && (
-            <DownloadXLSX data={excelData} workbook={uploadedWorkbook} />
-          )}
       </div>
-    </div>
+    </>
   );
 };
 

@@ -2,20 +2,22 @@ const DownloadJSON = ({ jsonData, title, fileName, addMapping }) => {
   const downloadHandler = () => {
     let data = jsonData;
     if (addMapping) {
-      const obj = jsonData.reduce((acc, { key, value }) => {
-        if (key && value) {
-          const values = value.split(',');
-          if (values.length > 1) {
-            const keyValues = [];
-            values.forEach((v) => keyValues.push(v));
-            acc[key.toUpperCase()] = keyValues;
-          } else {
-            acc[key.toUpperCase()] = value;
-          }
-        }
-        return acc;
-      }, {});
-      data = obj;
+      // const obj = jsonData.reduce((acc, { key, value }) => {
+      //   console.log(key, value);
+      //   if (key && value) {
+      //     const values = value.split(',');
+      //     if (values.length > 1) {
+      //       const keyValues = [];
+      //       values.forEach((v) => keyValues.push(v));
+      //       acc[key.toUpperCase()] = keyValues;
+      //     } else {
+      //       acc[key.toUpperCase()] = value;
+      //     }
+      //   }
+      //   return acc;
+      // }, {});
+      // data = obj;
+      data = JSON.parse(localStorage.getItem('templateMapping'));
     }
     const jsonContent = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonContent], { type: 'application/json' });
