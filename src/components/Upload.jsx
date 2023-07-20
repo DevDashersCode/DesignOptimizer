@@ -48,13 +48,21 @@ const Upload = () => {
   const [uploadedWorkbook, setUploadedWorkbook] = useState(null);
   const [excelData, setExcelData] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
+  const [showDownloadButtons, setShowDownloadButtons] = useState(false);
+  const [rawFileName, setRawFileName] = useState('');
 
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    setShowDownloadButtons(false);
+  };
+
+  const handleFinish = () => {
+    setShowDownloadButtons(true);
   };
 
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setShowDownloadButtons(false);
   };
 
   const parseFile = useCallback((file) => {
@@ -75,6 +83,7 @@ const Upload = () => {
       setMappingDetails(null);
       setDownloadableCSVData('');
       setExcelData(null);
+      setRawFileName('');
       acceptedFiles.forEach((file) => {
         const currentFileName = file.name.split('.')[0].toLowerCase();
         if (file.type === 'text/csv' && selectedConversion === 'raw') {
@@ -98,6 +107,8 @@ const Upload = () => {
             setMappingDetails(mappingDetails);
             setPreparedData(converted);
             setDownloadFile(true);
+            setRawFileName(file.name);
+            setShowDownloadButtons(false);
             setFileName(`${currentFileName}-event-prepared-v1-0.json`);
           };
 
@@ -222,8 +233,6 @@ const Upload = () => {
         setPreparedSchema(JSON.parse(schema));
       }
 
-      console.log(finalData);
-
       if (
         selectedConversion === 'raw' &&
         finalData &&
@@ -259,6 +268,7 @@ const Upload = () => {
     setMappingDetails(null);
     setDownloadableCSVData('');
     setExcelData(null);
+    setRawFileName('');
   }, [selectedConversion, selectedTemplate]);
 
   const onConversionHandler = (event) => {
@@ -330,6 +340,11 @@ const Upload = () => {
     return true;
   };
 
+  const onTemplateDeleteHandler = () => {
+    setTemplateFileName('');
+    setUserTemplate(null);
+  };
+
   return (
     <>
       <div className="prepared-container ">
@@ -391,37 +406,45 @@ const Upload = () => {
                     {templateFileName && (
                       <p>
                         You have selected tempalate mapping: {templateFileName}
+                        <span>
+                          <button
+                            className={`button template-delete-button`}
+                            onClick={onTemplateDeleteHandler}
+                          >
+                            Delete
+                          </button>
+                        </span>
                       </p>
                     )}
-                    {selectedConversion === 'prepared' &&
-                      selectedTemplate === 'no' && (
-                        <div>
+                    {selectedConversion === 'prepared' && (
+                      <div>
+                        <>
                           <AddMapping />
-                        </div>
-                      )}
-
-                    {(selectedConversion === 'raw' ||
-                      (selectedConversion === 'prepared' &&
-                        selectedTemplate === 'yes')) &&
-                      !userTemplate && (
-                        <div
-                          {...getRootProps({
-                            className: `dropzone 
+                          {(selectedConversion === 'raw' ||
+                            (selectedConversion === 'prepared' &&
+                              selectedTemplate === 'yes')) &&
+                            !userTemplate && (
+                              <div
+                                {...getRootProps({
+                                  className: `dropzone 
           ${isDragAccept && 'dropzoneAccept'} 
           ${isDragReject && 'dropzoneReject'}`,
-                          })}
-                        >
-                          <input
-                            {...getInputProps()}
-                            onClick={() => setDownloadFile(false)}
-                          />
-                          {isDragActive ? (
-                            <p>Drop the files here ...</p>
-                          ) : (
-                            `Drag 'n' drop template file here, or click to select template file`
-                          )}
-                        </div>
-                      )}
+                                })}
+                              >
+                                <input
+                                  {...getInputProps()}
+                                  onClick={() => setDownloadFile(false)}
+                                />
+                                {isDragActive ? (
+                                  <p>Drop the files here ...</p>
+                                ) : (
+                                  `Drag 'n' drop template file here, or click to select template file`
+                                )}
+                              </div>
+                            )}
+                        </>
+                      </div>
+                    )}
                   </div>
                 )}
                 {activeStep === 1 && (
@@ -484,6 +507,10 @@ const Upload = () => {
                       <>
                         <div>
                           <p>Please select raw file</p>
+                          <p>
+                            {rawFileName &&
+                              `You have selected raw template file: ${rawFileName}`}
+                          </p>
                         </div>
                         <div
                           {...getRootProps({
@@ -507,7 +534,7 @@ const Upload = () => {
                     {selectedConversion === 'prepared' && (
                       <div className="conversionDropDown">
                         <div>
-                          {downloadFile && (
+                          {downloadFile && showDownloadButtons && (
                             <DownloadJSON
                               jsonData={finalData}
                               title={'Download JSON'}
@@ -518,7 +545,8 @@ const Upload = () => {
                         <div>
                           {downloadFile &&
                             preparedSchema &&
-                            selectedConversion === 'prepared' && (
+                            selectedConversion === 'prepared' &&
+                            showDownloadButtons && (
                               <DownloadJSON
                                 jsonData={preparedSchema}
                                 title={'Download Prepared Schema'}
@@ -532,6 +560,7 @@ const Upload = () => {
                           {downloadFile &&
                             preparedSchema &&
                             selectedConversion === 'prepared' &&
+                            showDownloadButtons &&
                             downloadableCSVData && (
                               <DownloadCSV
                                 csvData={downloadableCSVData}
@@ -582,7 +611,8 @@ const Upload = () => {
                           selectedConversion === 'prepared' &&
                           downloadExcelFile &&
                           uploadedWorkbook &&
-                          excelData && (
+                          excelData &&
+                          showDownloadButtons && (
                             <DownloadXLSX
                               data={excelData}
                               workbook={uploadedWorkbook}
@@ -602,6 +632,7 @@ const Upload = () => {
                 >
                   Back
                 </button>
+
                 {activeStep !== 2 && (
                   <button
                     className="step-button"
@@ -610,6 +641,15 @@ const Upload = () => {
                     disabled={nextDisabled()}
                   >
                     Next
+                  </button>
+                )}
+                {activeStep === 2 && (
+                  <button
+                    className="step-button"
+                    style={{ marginLeft: '8px' }}
+                    onClick={handleFinish}
+                  >
+                    Finish
                   </button>
                 )}
               </div>
@@ -691,7 +731,8 @@ const Upload = () => {
             <div>
               {downloadFile &&
                 preparedSchema &&
-                selectedConversion === 'prepared' && (
+                selectedConversion === 'prepared' &&
+                showDownloadButtons && (
                   <DownloadJSON
                     jsonData={preparedSchema}
                     title={'Download Prepared Schema'}
@@ -705,7 +746,8 @@ const Upload = () => {
               {downloadFile &&
                 preparedSchema &&
                 selectedConversion === 'prepared' &&
-                downloadableCSVData && (
+                downloadableCSVData &&
+                showDownloadButtons && (
                   <DownloadCSV
                     csvData={downloadableCSVData}
                     title={'Download prepared mapping CSV'}
@@ -748,7 +790,8 @@ const Upload = () => {
               selectedConversion === 'prepared' &&
               downloadExcelFile &&
               uploadedWorkbook &&
-              excelData && (
+              excelData &&
+              showDownloadButtons && (
                 <DownloadXLSX data={excelData} workbook={uploadedWorkbook} />
               )}
           </div>

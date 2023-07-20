@@ -43,6 +43,7 @@ h3 {
   cursor: pointer;
   font-family: 'Nunito', sans-serif;
   height: 2rem;
+  margin: 1rem 1rem;
 }
 
 .validationResult {
@@ -238,7 +239,7 @@ h3 {
 
 .stepContent {
   margin-bottom: 20px;
-  height: 40vh;
+  /* height: 40vh; */
   width: 100%;
   margin: 50px;
 }
@@ -266,7 +267,7 @@ h3 {
 
 .prepared-container {
   border: 2px solid #cc0200;
-  height: 90vh;
+  /* height: 90vh; */
   background-color: white;
 }
 
@@ -298,4 +299,22 @@ h3 {
 
 .marginTop {
   margin-top: 10px;
+}
+
+.table-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.template-delete-button {
+  padding: 5px 10px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+  background-color: #a40f26;
+  margin: 10px 20px;
+  height: 30px;
 }

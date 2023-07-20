@@ -53,14 +53,14 @@ const convertKeys = (obj, source) => {
           //   convertKeys(nestedObj, source)
           // );
           // taking only the 1st object in array
-          converted[camelCase(obj[key])] = obj[key][0];
+          converted[camelCase(key)] = obj[key][0];
           convertedData.push({
             from: '',
             to: camelCase(key),
             value: '',
           });
           const nestedArrayResult = convertKeys(obj[key][0], source);
-          converted[camelCase(key)] = nestedArrayResult.converted;
+          converted[camelCase(key)] = [nestedArrayResult.converted];
           convertedData.push(...nestedArrayResult.mappingDetails);
         } else {
           let newKey = camelCase(key);

@@ -81,7 +81,7 @@ const AddMapping = () => {
                         onChange={(e) => onChangeHandler(index, e)}
                       />
                     </td>
-                    <td>
+                    <td className="table-buttons">
                       <button
                         className="addButtonBackground"
                         onClick={onAdd}
