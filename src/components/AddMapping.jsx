@@ -2,12 +2,12 @@ import { useState } from 'react';
 import DownloadJSON from './DownloadJSON';
 import AddMappingData from './MappingData';
 
-const AddMapping = () => {
+const AddMapping = ({ userTemplateData }) => {
   const [data, setData] = useState([{ key: '', value: '', isDisable: true }]);
   const [finalData, setFinalData] = useState(data);
   const [operation, setOperation] = useState('');
   const [deletedValue, setDeletedValue] = useState(null);
-
+  console.log(userTemplateData);
   const onChangeHandler = (index, e) => {
     const { name, value } = e.target;
     const rows = [...data];
@@ -48,6 +48,7 @@ const AddMapping = () => {
             templateData={finalData}
             operation={operation}
             deletedValue={deletedValue}
+            userTemplateData={userTemplateData}
           />
         </div>
         <div className="addMapping">

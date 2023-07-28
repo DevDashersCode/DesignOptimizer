@@ -13,7 +13,9 @@ import {
 import convertToCSV from '../helpers/convertToCSV';
 import DownloadCSV from './DownloadCSV';
 import { read } from 'xlsx';
+import * as XLSX from 'xlsx';
 import DownloadXLSX from './DownloadXLSX';
+import { generateInBoundData } from '../helpers/generateInBoundData';
 
 const convertDropdown = [
   { id: 1, value: 'raw', label: 'Raw' },
@@ -36,12 +38,14 @@ const Upload = () => {
   const [preparedSchema, setPreparedSchema] = useState(null);
   const [rawSchema, setRawSchema] = useState(null);
   const [fileName, setFileName] = useState('');
-  const [templateFileName, setTemplateFileName] = useState('');
+  const [templateFileName, setTemplateFileName] = useState('userTemplate.json');
   const [excelTemplateFileName, setExcelTemplateFileName] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(
     templateDropdown[0].value
   );
-  const [userTemplate, setUserTemplate] = useState(null);
+  const [userTemplate, setUserTemplate] = useState(
+    localStorage.getItem('templateMapping')
+  );
   const [mappingDetails, setMappingDetails] = useState(null);
   const [downloadableCSVData, setDownloadableCSVData] = useState('');
   const [downloadExcelFile, setDownloadExcelFile] = useState(false);
@@ -50,8 +54,14 @@ const Upload = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [showDownloadButtons, setShowDownloadButtons] = useState(false);
   const [rawFileName, setRawFileName] = useState('');
+  const [inboundData, setInboundData] = useState(null);
+  const [inboundWorkbook, setInboundWorkbook] = useState(null);
+  const [inboundDBMapperFile, setInboundDBMapperFile] = useState('');
 
   const handleNext = () => {
+    if (activeStep === 0) {
+      setUserTemplate(localStorage.getItem('templateMapping'));
+    }
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
     setShowDownloadButtons(false);
   };
@@ -74,18 +84,22 @@ const Upload = () => {
 
   const onDrop = useCallback(
     (acceptedFiles) => {
-      setDownloadFile(false);
-      setCsvData(null);
-      setPreparedData(null);
-      setPreparedSchema(null);
-      setFileName('');
-      setRawSchema(null);
-      setMappingDetails(null);
-      setDownloadableCSVData('');
-      setExcelData(null);
-      setRawFileName('');
+      // setDownloadFile(false);
+      // setCsvData(null);
+      // setPreparedData(null);
+      // setPreparedSchema(null);
+      // setFileName('');
+      // setRawSchema(null);
+      // // setMappingDetails(null);
+      // setDownloadableCSVData('');
+      // setExcelData(null);
+      // setRawFileName('');
+      // setInboundData(null);
+      // setInboundWorkbook(null);
+      // setInboundDBMapperFile('');
       acceptedFiles.forEach((file) => {
         const currentFileName = file.name.split('.')[0].toLowerCase();
+        console.log(file);
         if (file.type === 'text/csv' && selectedConversion === 'raw') {
           parseFile(file);
           setDownloadFile(true);
@@ -95,14 +109,18 @@ const Upload = () => {
         if (
           file.type === 'application/json' &&
           selectedConversion === 'prepared' &&
-          userTemplate
+          activeStep === 2
         ) {
           const reader = new FileReader();
 
           reader.onload = () => {
             const content = reader.result;
             const data = JSON.parse(content);
-            const convertedData = convertToJsonMapper(data, userTemplate);
+            console.log(userTemplate);
+            const convertedData = convertToJsonMapper(
+              data,
+              JSON.parse(userTemplate)
+            );
             const { mappingDetails, converted } = convertedData;
             setMappingDetails(mappingDetails);
             setPreparedData(converted);
@@ -110,6 +128,7 @@ const Upload = () => {
             setRawFileName(file.name);
             setShowDownloadButtons(false);
             setFileName(`${currentFileName}-event-prepared-v1-0.json`);
+            console.log(mappingDetails);
           };
 
           reader.readAsText(file);
@@ -117,7 +136,7 @@ const Upload = () => {
         if (
           file.type === 'application/json' &&
           selectedConversion === 'prepared' &&
-          userTemplate === null
+          activeStep === 0
         ) {
           const reader = new FileReader();
           reader.onload = () => {
@@ -128,10 +147,10 @@ const Upload = () => {
           };
           reader.readAsText(file);
         }
-
         if (
           file.type ===
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' &&
+          activeStep === 1
         ) {
           const reader = new FileReader();
           reader.onload = (event) => {
@@ -142,10 +161,42 @@ const Upload = () => {
           };
 
           reader.readAsArrayBuffer(file);
+        } else if (
+          file.type ===
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' &&
+          mappingDetails &&
+          activeStep === 3
+        ) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const data = new Uint8Array(event.target.result);
+            const workbook = read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+
+            const objectData = XLSX.utils.sheet_to_json(sheet);
+            console.log(objectData);
+            const inbound = generateInBoundData(objectData, mappingDetails);
+            setInboundData(inbound);
+            setInboundWorkbook(workbook);
+            console.log(inbound);
+            setInboundDBMapperFile(file.name);
+          };
+
+          reader.readAsArrayBuffer(file);
         }
       });
     },
-    [parseFile, selectedConversion, userTemplate]
+    // [
+    //   activeStep,
+    //   excelTemplateFileName,
+    //   mappingDetails,
+    //   parseFile,
+    //   selectedConversion,
+    //   uploadedWorkbook,
+    //   userTemplate,
+    // ]
+    [activeStep, mappingDetails, parseFile, selectedConversion, userTemplate]
   );
 
   const clearData = useCallback(() => {
@@ -256,19 +307,22 @@ const Upload = () => {
   }, [csvData, downloadFile, mappingDetails, preparedData, selectedConversion]);
 
   useEffect(() => {
-    setDownloadFile(false);
-    setCsvData(null);
-    setPreparedData(null);
-    setPreparedSchema(null);
-    setFileName('');
-    setRawSchema(null);
-    setUserTemplate(null);
-    setTemplateFileName('');
-    setExcelTemplateFileName('');
-    setMappingDetails(null);
-    setDownloadableCSVData('');
-    setExcelData(null);
-    setRawFileName('');
+    // setDownloadFile(false);
+    // setCsvData(null);
+    // setPreparedData(null);
+    // setPreparedSchema(null);
+    // setFileName('');
+    // setRawSchema(null);
+    // setUserTemplate(null);
+    // setTemplateFileName('');
+    // setExcelTemplateFileName('');
+    // setMappingDetails(null);
+    // setDownloadableCSVData('');
+    // setExcelData(null);
+    // setRawFileName('');
+    // setInboundData(null);
+    // setInboundWorkbook(null);
+    // setInboundDBMapperFile('');
   }, [selectedConversion, selectedTemplate]);
 
   const onConversionHandler = (event) => {
@@ -319,8 +373,7 @@ const Upload = () => {
     dragDropLabel = <p>Please select excel template file</p>;
   } else if (
     selectedConversion === 'prepared' &&
-    selectedTemplate === 'yes' &&
-    userTemplate
+    (selectedTemplate === 'yes' || userTemplate)
   ) {
     dragDropText = (
       <p>Drag 'n' drop raw file here, or click to select raw file</p>
@@ -330,11 +383,19 @@ const Upload = () => {
 
   const nextDisabled = () => {
     if (activeStep === 0) {
-      return !(userTemplate !== null);
+      return !(
+        userTemplate !== null ||
+        (userTemplate && Object.keys(userTemplate).length > 0)
+      );
     }
 
     if (activeStep === 1) {
+      console.log(userTemplate);
       return !(downloadExcelFile ? excelTemplateFileName !== '' : true);
+    }
+
+    if (activeStep === 2) {
+      return !rawFileName;
     }
 
     return true;
@@ -386,6 +447,14 @@ const Upload = () => {
                 >
                   3
                 </div>
+                <div
+                  className="step"
+                  style={{
+                    backgroundColor: activeStep === 3 ? '#CC0200' : '#E0E0E0',
+                  }}
+                >
+                  4
+                </div>
               </div>
               <div className="stepContent">
                 {activeStep === 0 && (
@@ -419,7 +488,7 @@ const Upload = () => {
                     {selectedConversion === 'prepared' && (
                       <div>
                         <>
-                          <AddMapping />
+                          <AddMapping userTemplateData={userTemplate} />
                           {(selectedConversion === 'raw' ||
                             (selectedConversion === 'prepared' &&
                               selectedTemplate === 'yes')) &&
@@ -503,7 +572,7 @@ const Upload = () => {
                   <div>
                     {(selectedConversion === 'raw' ||
                       (selectedConversion === 'prepared' &&
-                        selectedTemplate === 'yes')) && (
+                        (selectedTemplate === 'yes' || userTemplate))) && (
                       <>
                         <div>
                           <p>Please select raw file</p>
@@ -534,7 +603,7 @@ const Upload = () => {
                     {selectedConversion === 'prepared' && (
                       <div className="conversionDropDown">
                         <div>
-                          {downloadFile && showDownloadButtons && (
+                          {downloadFile && (
                             <DownloadJSON
                               jsonData={finalData}
                               title={'Download JSON'}
@@ -545,8 +614,7 @@ const Upload = () => {
                         <div>
                           {downloadFile &&
                             preparedSchema &&
-                            selectedConversion === 'prepared' &&
-                            showDownloadButtons && (
+                            selectedConversion === 'prepared' && (
                               <DownloadJSON
                                 jsonData={preparedSchema}
                                 title={'Download Prepared Schema'}
@@ -560,7 +628,6 @@ const Upload = () => {
                           {downloadFile &&
                             preparedSchema &&
                             selectedConversion === 'prepared' &&
-                            showDownloadButtons &&
                             downloadableCSVData && (
                               <DownloadCSV
                                 csvData={downloadableCSVData}
@@ -598,7 +665,8 @@ const Upload = () => {
                           selectedConversion === 'raw' &&
                           downloadExcelFile &&
                           uploadedWorkbook &&
-                          excelData && (
+                          excelData &&
+                          activeStep === 1 && (
                             <DownloadXLSX
                               data={excelData}
                               workbook={uploadedWorkbook}
@@ -611,15 +679,62 @@ const Upload = () => {
                           selectedConversion === 'prepared' &&
                           downloadExcelFile &&
                           uploadedWorkbook &&
-                          excelData &&
-                          showDownloadButtons && (
+                          excelData && (
                             <DownloadXLSX
                               data={excelData}
                               workbook={uploadedWorkbook}
+                              insertAfter={'DATA - begin'}
                             />
                           )}
                       </div>
                     )}
+                  </div>
+                )}
+                {activeStep === 3 && (
+                  <div>
+                    {(selectedConversion === 'raw' ||
+                      (selectedConversion === 'prepared' &&
+                        (selectedTemplate === 'yes' || userTemplate))) && (
+                      <>
+                        <div>
+                          <p>Please select DB Mapper file</p>
+                          <p>
+                            {inboundDBMapperFile &&
+                              `You have selected DB Mapper file: ${inboundDBMapperFile}`}
+                          </p>
+                        </div>
+                        <div
+                          {...getRootProps({
+                            className: `dropzone 
+          ${isDragAccept && 'dropzoneAccept'} 
+          ${isDragReject && 'dropzoneReject'}`,
+                          })}
+                        >
+                          <input
+                            {...getInputProps()}
+                            onClick={() => setDownloadFile(false)}
+                          />
+                          {isDragActive ? (
+                            <p>Drop the files here ...</p>
+                          ) : (
+                            `Drag 'n' drop DB Mapper excel file here, or click to select DB Mapper excel file`
+                          )}
+                        </div>
+                      </>
+                    )}
+                    {selectedConversion === 'prepared' &&
+                      showDownloadButtons && (
+                        <div className="conversionDropDown">
+                          <div>
+                            {inboundData && (
+                              <DownloadXLSX
+                                data={inboundData}
+                                workbook={inboundWorkbook}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 )}
               </div>
@@ -633,7 +748,7 @@ const Upload = () => {
                   Back
                 </button>
 
-                {activeStep !== 2 && (
+                {activeStep !== 3 && (
                   <button
                     className="step-button"
                     style={{ marginLeft: '8px' }}
@@ -643,7 +758,7 @@ const Upload = () => {
                     Next
                   </button>
                 )}
-                {activeStep === 2 && (
+                {activeStep === 3 && (
                   <button
                     className="step-button"
                     style={{ marginLeft: '8px' }}
@@ -655,50 +770,6 @@ const Upload = () => {
               </div>
             </div>
           )}
-          {/* {selectedConversion === 'prepared' && (
-        <div className="conversionDropDown">
-          <p>Do you have template mapping ?</p>
-          <select value={selectedTemplate} onChange={onTemplateHandler}>
-            {templateDropdown.map((template) => (
-              <option key={template.value} value={template.value}>
-                {template.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )} */}
-          {/* {templateFileName && (
-        <p>You have selected tempalate mapping: {templateFileName}</p>
-      )} */}
-          {/* {templateFileName && (
-        <label>
-          <input
-            type="checkbox"
-            checked={downloadExcelFile}
-            onChange={() => setDownloadExcelFile(!downloadExcelFile)}
-          />
-          <span className="checkBoxLabel">
-            Wanted to download mapping excel file{' '}
-          </span>
-        </label>
-      )} */}
-          {/* {dragDropLabel} */}
-          {/* {(selectedConversion === 'raw' ||
-        (selectedConversion === 'prepared' && selectedTemplate === 'yes')) && (
-        <div
-          {...getRootProps({
-            className: `dropzone 
-          ${isDragAccept && 'dropzoneAccept'} 
-          ${isDragReject && 'dropzoneReject'}`,
-          })}
-        >
-          <input {...getInputProps()} onClick={() => setDownloadFile(false)} />
-          {isDragActive ? <p>Drop the files here ...</p> : dragDropText}
-        </div>
-      )} */}
-          {/* {selectedConversion === 'prepared' && selectedTemplate === 'no' && (
-        <AddMapping />
-      )} */}
         </div>
         <div>
           {selectedConversion === 'raw' && (
@@ -731,8 +802,7 @@ const Upload = () => {
             <div>
               {downloadFile &&
                 preparedSchema &&
-                selectedConversion === 'prepared' &&
-                showDownloadButtons && (
+                selectedConversion === 'prepared' && (
                   <DownloadJSON
                     jsonData={preparedSchema}
                     title={'Download Prepared Schema'}
@@ -746,8 +816,7 @@ const Upload = () => {
               {downloadFile &&
                 preparedSchema &&
                 selectedConversion === 'prepared' &&
-                downloadableCSVData &&
-                showDownloadButtons && (
+                downloadableCSVData && (
                   <DownloadCSV
                     csvData={downloadableCSVData}
                     title={'Download prepared mapping CSV'}
@@ -790,9 +859,12 @@ const Upload = () => {
               selectedConversion === 'prepared' &&
               downloadExcelFile &&
               uploadedWorkbook &&
-              excelData &&
-              showDownloadButtons && (
-                <DownloadXLSX data={excelData} workbook={uploadedWorkbook} />
+              excelData && (
+                <DownloadXLSX
+                  data={excelData}
+                  workbook={uploadedWorkbook}
+                  insertAfter={'DATA - begin'}
+                />
               )}
           </div>
         )}

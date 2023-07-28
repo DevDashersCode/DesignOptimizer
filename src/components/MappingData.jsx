@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 import { source } from '../helpers/mappingSource';
 
-const AddMappingData = ({ templateData, operation, deletedValue }) => {
+const AddMappingData = ({
+  templateData,
+  operation,
+  deletedValue,
+  userTemplateData,
+}) => {
   const [sourceData, setSourceData] = useState(source);
+  console.log(sourceData);
   const mappingTemplate = JSON.stringify(sourceData, null, 2);
+  console.log(mappingTemplate);
   const [mappingData, setMappingData] = useState(mappingTemplate);
   const templateObj = {};
-
   templateData?.forEach((t) => {
     if (t.key && t.value) {
       templateObj[t.key] = t.value;
@@ -28,6 +34,21 @@ const AddMappingData = ({ templateData, operation, deletedValue }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateData]);
+
+  useEffect(() => {
+    if (userTemplateData) {
+      console.log(userTemplateData);
+      let obj = null;
+      try {
+        obj = JSON.parse(userTemplateData) ?? source;
+      } catch {
+        obj = userTemplateData ?? source;
+      }
+      console.log(obj);
+      setSourceData(obj);
+      setMappingData(JSON.stringify(obj, null, 2));
+    }
+  }, [userTemplateData]);
 
   const handleChangeHandler = (e) => {
     setMappingData(e.target.value);
