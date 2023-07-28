@@ -99,7 +99,6 @@ const Upload = () => {
       // setInboundDBMapperFile('');
       acceptedFiles.forEach((file) => {
         const currentFileName = file.name.split('.')[0].toLowerCase();
-        console.log(file);
         if (file.type === 'text/csv' && selectedConversion === 'raw') {
           parseFile(file);
           setDownloadFile(true);
@@ -116,7 +115,6 @@ const Upload = () => {
           reader.onload = () => {
             const content = reader.result;
             const data = JSON.parse(content);
-            console.log(userTemplate);
             const convertedData = convertToJsonMapper(
               data,
               JSON.parse(userTemplate)
@@ -128,7 +126,6 @@ const Upload = () => {
             setRawFileName(file.name);
             setShowDownloadButtons(false);
             setFileName(`${currentFileName}-event-prepared-v1-0.json`);
-            console.log(mappingDetails);
           };
 
           reader.readAsText(file);
@@ -175,11 +172,9 @@ const Upload = () => {
             const sheet = workbook.Sheets[sheetName];
 
             const objectData = XLSX.utils.sheet_to_json(sheet);
-            console.log(objectData);
             const inbound = generateInBoundData(objectData, mappingDetails);
             setInboundData(inbound);
             setInboundWorkbook(workbook);
-            console.log(inbound);
             setInboundDBMapperFile(file.name);
           };
 
@@ -390,7 +385,6 @@ const Upload = () => {
     }
 
     if (activeStep === 1) {
-      console.log(userTemplate);
       return !(downloadExcelFile ? excelTemplateFileName !== '' : true);
     }
 

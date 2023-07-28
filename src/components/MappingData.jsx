@@ -8,9 +8,7 @@ const AddMappingData = ({
   userTemplateData,
 }) => {
   const [sourceData, setSourceData] = useState(source);
-  console.log(sourceData);
   const mappingTemplate = JSON.stringify(sourceData, null, 2);
-  console.log(mappingTemplate);
   const [mappingData, setMappingData] = useState(mappingTemplate);
   const templateObj = {};
   templateData?.forEach((t) => {
@@ -37,14 +35,12 @@ const AddMappingData = ({
 
   useEffect(() => {
     if (userTemplateData) {
-      console.log(userTemplateData);
       let obj = null;
       try {
         obj = JSON.parse(userTemplateData) ?? source;
       } catch {
         obj = userTemplateData ?? source;
       }
-      console.log(obj);
       setSourceData(obj);
       setMappingData(JSON.stringify(obj, null, 2));
     }

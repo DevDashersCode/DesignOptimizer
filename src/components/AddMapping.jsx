@@ -7,7 +7,7 @@ const AddMapping = ({ userTemplateData }) => {
   const [finalData, setFinalData] = useState(data);
   const [operation, setOperation] = useState('');
   const [deletedValue, setDeletedValue] = useState(null);
-  console.log(userTemplateData);
+
   const onChangeHandler = (index, e) => {
     const { name, value } = e.target;
     const rows = [...data];
