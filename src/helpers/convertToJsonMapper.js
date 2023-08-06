@@ -4,9 +4,11 @@ const getKeyIfKeyExists = (key, source) => {
   return Object.keys(source).find((k) => k === key);
 };
 
-const getDataObject = (data) => {
+export const getDataObject = (data) => {
+  console.log(data);
   for (const key in data) {
     if (typeof data[key] === 'object') {
+      console.log(key);
       if (key === 'data') {
         return data[key];
       } else {
@@ -121,6 +123,7 @@ const convertKeys = (obj, source) => {
 };
 
 export const convertToJsonMapper = (data, userTemplate) => {
+  console.log(data, userTemplate);
   const source = userTemplate;
   const dataObj = getDataObject(data);
   const convertedData = convertKeys(dataObj, source);

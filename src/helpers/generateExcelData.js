@@ -1,7 +1,7 @@
 const GenerateRawExcel = (data) => {
   if (data) {
     const rawExcelData = [];
-    for (const [key, value] of Object.entries(data?.message?.data)) {
+    for (const [key, value] of Object.entries(data?.data)) {
       const data = {
         Raw: key,
         DataType: `${typeof value}`,
