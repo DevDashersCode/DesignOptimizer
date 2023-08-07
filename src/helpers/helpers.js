@@ -1,6 +1,4 @@
 export function updateObjectWithGivenData(originalObject, givenData) {
-  console.log(originalObject);
-  console.log(givenData);
   // Recursive function to update 'data' key at any nesting level
   function updateDataKey(obj, data) {
     let isUpdated = false;
@@ -9,7 +7,6 @@ export function updateObjectWithGivenData(originalObject, givenData) {
         // If the current property is an object, check for the 'data' key
         if (key === 'data') {
           // Merge the 'data' key with the given data
-          console.log(data);
           obj[key] = Object.assign(obj[key], data?.data);
           isUpdated = true;
         } else {
@@ -18,14 +15,11 @@ export function updateObjectWithGivenData(originalObject, givenData) {
         }
       }
     }
-    console.log(isUpdated);
     if (!isUpdated) {
-      console.log('inside');
-      console.log(obj);
       obj = { ...obj, ...data };
-      console.log(obj);
-      console.log(data);
     }
+
+    return obj;
   }
 
   // Check if the givenData object has any properties
@@ -35,7 +29,6 @@ export function updateObjectWithGivenData(originalObject, givenData) {
   }
 
   // Check if the 'data' key exists at any level in the originalObject
-  updateDataKey(originalObject, givenData);
-  console.log(originalObject);
-  return originalObject;
+  const obj = updateDataKey(originalObject, givenData);
+  return obj;
 }

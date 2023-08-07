@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import Papa from 'papaparse';
 import { useDropzone } from 'react-dropzone';
 import DownloadJSON from './DownloadJSON';
-import { generateGUID } from '../helpers/generateGUID';
 import {
   convertToJsonMapper,
   getDataObject,
@@ -126,7 +125,6 @@ const Upload = () => {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      console.log('inside handle chnge');
       const step = localStorage.getItem('activeStep')
         ? +localStorage.getItem('activeStep')
         : 0;
@@ -134,7 +132,6 @@ const Upload = () => {
       if (localStorage.getItem('selectedConversion') !== 'raw' && step === 2) {
         const data = localStorage.getItem('preparedRawData');
         const obj = getDataObject(JSON.parse(data));
-        console.log(obj);
         if (obj) {
           setUserTemplate(localStorage.getItem('templateMapping'));
           GeneratePreparedData(JSON.parse(data));
@@ -146,15 +143,12 @@ const Upload = () => {
         selectedConversion === 'raw'
       ) {
         const localRawData = JSON.parse(localStorage.getItem('rawData'));
-        console.log(localRawData);
         const obj = updateObjectWithGivenData(
           JSON.parse(localStorage.getItem('rawInputTemplate')),
           {
             ...localRawData,
           }
         );
-        console.log(obj);
-        console.log('inside raw conversion');
         // executeIfDownloadable();
         // // finalData = localRawData ? { ...localRawData } : {};
         const finalData = obj ? obj : {};
@@ -199,15 +193,12 @@ const Upload = () => {
           reader.onload = () => {
             const content = reader.result;
             const data = JSON.parse(content);
-            console.log(data);
             setRawInputTemplate(data);
             localStorage.setItem('rawInputTemplate', content);
-            console.log(localStorage.getItem('rawInputTemplate'));
           };
 
           reader.readAsText(file);
         }
-        console.log(localStorage.getItem('preparedInputTemplate'));
         if (
           file.type === 'application/json' &&
           selectedConversion === 'prepared' &&
@@ -221,7 +212,6 @@ const Upload = () => {
             const data = JSON.parse(content);
             localStorage.setItem('preparedInputTemplate', content);
             setPreparedInputTemplate(data);
-            console.log(data);
           };
 
           reader.readAsText(file);
@@ -238,7 +228,6 @@ const Upload = () => {
             const content = reader.result;
             const data = JSON.parse(content);
             // setRawPreparedData(data);
-            console.log(content);
             localStorage.setItem('preparedRawData', content);
             GeneratePreparedData(data, file, currentFileName);
           };
@@ -376,11 +365,14 @@ const Upload = () => {
         const localRawData =
           localStorage.getItem('preparedRawData') &&
           JSON.parse(localStorage.getItem('preparedRawData'));
-        finalData = {
-          ...localRawData,
-
-          data: preparedData,
-        };
+        const preparedInputTemplateData = JSON.parse(
+          localStorage.getItem('preparedInputTemplate')
+        );
+        const obj = updateObjectWithGivenData(
+          preparedInputTemplateData,
+          localRawData
+        );
+        finalData = obj;
       }
 
       // Genereate Schema for the prepared data
@@ -400,12 +392,9 @@ const Upload = () => {
       }
 
       if (selectedConversion === 'raw' && finalData) {
-        console.log(finalData);
         const data = GenerateRawExcel({ ...finalData });
-        console.log(data);
         setExcelData(data);
         const csvString = convertToCSV(data);
-        console.log(csvString);
         setDownloadableCSVData(csvString);
       }
 
@@ -415,7 +404,6 @@ const Upload = () => {
         const csvString = convertToCSV(data);
         setDownloadableCSVData(csvString);
       }
-      console.log({ ...JSON.parse(JSON.stringify(finalData, null, 2)) });
       setFinalData(JSON.parse(JSON.stringify(finalData, null, 2)));
     }
   };
@@ -530,7 +518,6 @@ const Upload = () => {
     const template = userTemplate ?? localStorage.getItem('templateMapping');
     const convertedData = convertToJsonMapper(data, JSON.parse(template));
     // const { mappingDetails, converted } = convertedData;
-    console.log(convertedData);
     setMappingDetails(convertedData?.mappingDetails);
     setPreparedData(convertedData?.converted);
     setDownloadFile(true);
@@ -553,19 +540,15 @@ const Upload = () => {
   };
 
   const handleProceedToUploadPreparedRaw = () => {
-    console.log(preparedInputTemplate);
     if (preparedInputTemplate) {
       try {
         const obj = JSON.stringify(preparedInputTemplate);
-        console.log(obj);
         if (obj) {
-          console.log('inside ');
           setIsPreparedInputTemplateUploaded(true);
         }
       } catch {
         setIsPreparedInputTemplateUploaded(false);
       }
-      console.log(isPreparedInputTemplateUploaded);
     }
   };
 
