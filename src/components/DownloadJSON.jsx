@@ -18,6 +18,8 @@ const DownloadJSON = ({ jsonData, title, fileName, addMapping }) => {
       // }, {});
       // data = obj;
       data = JSON.parse(localStorage.getItem('templateMapping'));
+    } else {
+      data = JSON.parse(localStorage.getItem('rawData'));
     }
     const jsonContent = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonContent], { type: 'application/json' });

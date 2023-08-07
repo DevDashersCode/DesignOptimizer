@@ -77,7 +77,7 @@ h3 {
 }
 
 .logo {
-  height: 20px;
+  height: 50px;
 }
 
 .header {
@@ -120,7 +120,7 @@ h3 {
   padding: 20px;
   cursor: pointer;
   height: 150px;
-  width: auto;
+  width: 50%;
   border: 2px dashed cyan;
   outline: none;
 }
@@ -317,4 +317,19 @@ h3 {
   background-color: #a40f26;
   margin: 10px 20px;
   height: 30px;
+}
+
+.raw-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 2rem;
+  gap: 1rem;
+}
+
+.raw-textareaContainer {
+  display: flex;
+  flex: 1 1;
+  max-width: 50%;
+  margin-bottom: 1rem;
 }
