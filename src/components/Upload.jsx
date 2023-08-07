@@ -370,7 +370,8 @@ const Upload = () => {
         );
         const obj = updateObjectWithGivenData(
           preparedInputTemplateData,
-          localRawData
+          localRawData,
+          true
         );
         finalData = obj;
       }

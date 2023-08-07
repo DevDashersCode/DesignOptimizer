@@ -1,6 +1,10 @@
-import { getDataObject } from './convertToJsonMapper';
+import { convertToJsonMapper, getDataObject } from './convertToJsonMapper';
 
-export function updateObjectWithGivenData(originalObject, givenData) {
+export function updateObjectWithGivenData(
+  originalObject,
+  givenData,
+  isPrepared
+) {
   // Recursive function to update 'data' key at any nesting level
   function updateDataKey(obj, data) {
     let isUpdated = false;
@@ -9,7 +13,13 @@ export function updateObjectWithGivenData(originalObject, givenData) {
         // If the current property is an object, check for the 'data' key
         if (key === 'data') {
           // Merge the 'data' key with the given data
-          obj[key] = Object.assign(obj[key], getDataObject(data));
+          let convertedData = {};
+          if (isPrepared) {
+            convertedData = convertToJsonMapper(data)?.converted;
+          } else {
+            convertedData = data?.data;
+          }
+          obj[key] = Object.assign(obj[key], convertedData);
           isUpdated = true;
         } else {
           // Recursively search for the 'data' key in nested objects
