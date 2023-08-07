@@ -602,7 +602,7 @@ const Upload = () => {
                 <div
                   className="step"
                   style={{
-                    backgroundColor: activeStep === 0 ? '#CC0200' : '#E0E0E0',
+                    backgroundColor: activeStep === 0 ? '#9F00FD' : '#E0E0E0',
                   }}
                 >
                   1
@@ -610,7 +610,7 @@ const Upload = () => {
                 <div
                   className="step"
                   style={{
-                    backgroundColor: activeStep === 1 ? '#CC0200' : '#E0E0E0',
+                    backgroundColor: activeStep === 1 ? '#9F00FD' : '#E0E0E0',
                   }}
                 >
                   2
@@ -618,7 +618,7 @@ const Upload = () => {
                 <div
                   className="step"
                   style={{
-                    backgroundColor: activeStep === 2 ? '#CC0200' : '#E0E0E0',
+                    backgroundColor: activeStep === 2 ? '#9F00FD' : '#E0E0E0',
                   }}
                 >
                   3
@@ -626,7 +626,7 @@ const Upload = () => {
                 <div
                   className="step"
                   style={{
-                    backgroundColor: activeStep === 3 ? '#CC0200' : '#E0E0E0',
+                    backgroundColor: activeStep === 3 ? '#9F00FD' : '#E0E0E0',
                   }}
                 >
                   4
