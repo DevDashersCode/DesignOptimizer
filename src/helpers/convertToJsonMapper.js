@@ -121,7 +121,8 @@ const convertKeys = (obj, source) => {
 };
 
 export const convertToJsonMapper = (data, userTemplate) => {
-  const source = userTemplate ?? localStorage.getItem('templateMapping');
+  const source =
+    userTemplate ?? JSON.parse(localStorage.getItem('templateMapping'));
   const dataObj = getDataObject(data);
   const convertedData = convertKeys(dataObj, source);
   return convertedData;
