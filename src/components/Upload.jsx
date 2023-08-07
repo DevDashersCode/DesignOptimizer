@@ -20,6 +20,7 @@ import * as XLSX from 'xlsx';
 import DownloadXLSX from './DownloadXLSX';
 import { generateInBoundData } from '../helpers/generateInBoundData';
 import RawTemplate from './RawTemplate';
+import { updateObjectWithGivenData } from '../helpers/helpers';
 
 const convertDropdown = [
   { id: 1, value: 'raw', label: 'Raw' },
@@ -38,9 +39,7 @@ const Upload = () => {
   const [selectedConversion, setSelectedConversion] = useState(
     convertDropdown[0].value
   );
-  const [preparedData, setPreparedData] = useState(
-    JSON.parse(localStorage.getItem('rawData'))
-  );
+  const [preparedData, setPreparedData] = useState(null);
   const [preparedSchema, setPreparedSchema] = useState(null);
   const [rawSchema, setRawSchema] = useState(null);
   const [fileName, setFileName] = useState('');
@@ -62,28 +61,37 @@ const Upload = () => {
   const [inboundWorkbook, setInboundWorkbook] = useState(null);
   const [inboundDBMapperFile, setInboundDBMapperFile] = useState('');
   const [rawPreparedData, setRawPreparedData] = useState(null);
+  const [rawInputTemplate, setRawInputTemplate] = useState(null);
+  const [preparedInputTemplate, setPreparedInputTemplate] = useState(null);
+  const [isRawInputTemplateUploaded, setIsRawInputTemplateUploaded] =
+    useState(false);
+  const [isPreparedInputTemplateUploaded, setIsPreparedInputTemplateUploaded] =
+    useState(false);
 
   useEffect(() => {
     setUserTemplate(localStorage.getItem('templateMapping'));
     setRawPreparedData(localStorage.getItem('rawData'));
+    localStorage.removeItem('rawInputTemplate');
+    localStorage.setItem('selectedConversion', 'raw');
   }, []);
 
   const handleNext = () => {
     if (activeStep === 0) {
-      setUserTemplate(localStorage.getItem('templateMapping'));
+      const userTemplateData = localStorage.getItem('templateMapping');
+      setUserTemplate(userTemplateData);
     }
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
     setShowDownloadButtons(false);
+    localStorage.setItem('activeStep', activeStep + 1);
+    // if (activeStep === 1) {
+    //   const data = JSON.parse(localStorage.getItem('rawData'));
+    //   const obj = getDataObject(data);
 
-    if (activeStep === 1) {
-      const data = JSON.parse(localStorage.getItem('rawData'));
-      const obj = getDataObject(data);
-
-      if (obj && Object.keys(obj).length > 0) {
-        setPreparedData(data);
-        GeneratePreparedData(data);
-      }
-    }
+    //   if (obj && Object.keys(obj).length > 0) {
+    //     setPreparedData(data);
+    //     GeneratePreparedData(data);
+    //   }
+    // }
   };
 
   const handleFinish = () => {
@@ -98,8 +106,10 @@ const Upload = () => {
       setPreparedData(null);
       setRawPreparedData(null);
       setFileName('');
+      localStorage.setItem('activeStep', activeStep - 1);
     } else {
       setSelectedConversion(convertDropdown[0].value);
+      localStorage.setItem('selectedConversion', convertDropdown[0].value);
     }
   };
 
@@ -116,13 +126,39 @@ const Upload = () => {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      if (selectedConversion !== 'raw') {
-        const data = localStorage.getItem('rawData');
+      console.log('inside handle chnge');
+      const step = localStorage.getItem('activeStep')
+        ? +localStorage.getItem('activeStep')
+        : 0;
+
+      if (localStorage.getItem('selectedConversion') !== 'raw' && step === 2) {
+        const data = localStorage.getItem('preparedRawData');
         const obj = getDataObject(JSON.parse(data));
+        console.log(obj);
         if (obj) {
           setUserTemplate(localStorage.getItem('templateMapping'));
           GeneratePreparedData(JSON.parse(data));
         }
+      }
+
+      if (
+        localStorage.getItem('selectedConversion') === 'raw' ||
+        selectedConversion === 'raw'
+      ) {
+        const localRawData = JSON.parse(localStorage.getItem('rawData'));
+        console.log(localRawData);
+        const obj = updateObjectWithGivenData(
+          JSON.parse(localStorage.getItem('rawInputTemplate')),
+          {
+            ...localRawData,
+          }
+        );
+        console.log(obj);
+        console.log('inside raw conversion');
+        // executeIfDownloadable();
+        // // finalData = localRawData ? { ...localRawData } : {};
+        const finalData = obj ? obj : {};
+        localStorage.setItem('rawData', JSON.stringify(finalData));
       }
     };
 
@@ -157,19 +193,54 @@ const Upload = () => {
           setFileName(`${currentFileName}-event-raw-v1-0.json`);
         }
 
+        if (file.type === 'application/json' && selectedConversion === 'raw') {
+          const reader = new FileReader();
+
+          reader.onload = () => {
+            const content = reader.result;
+            const data = JSON.parse(content);
+            console.log(data);
+            setRawInputTemplate(data);
+            localStorage.setItem('rawInputTemplate', content);
+            console.log(localStorage.getItem('rawInputTemplate'));
+          };
+
+          reader.readAsText(file);
+        }
+        console.log(localStorage.getItem('preparedInputTemplate'));
         if (
           file.type === 'application/json' &&
           selectedConversion === 'prepared' &&
-          activeStep === 2
+          activeStep === 2 &&
+          !localStorage.getItem('preparedInputTemplate')
         ) {
           const reader = new FileReader();
 
           reader.onload = () => {
             const content = reader.result;
             const data = JSON.parse(content);
-            setRawPreparedData(data);
+            localStorage.setItem('preparedInputTemplate', content);
+            setPreparedInputTemplate(data);
+            console.log(data);
+          };
+
+          reader.readAsText(file);
+        }
+        if (
+          file.type === 'application/json' &&
+          selectedConversion === 'prepared' &&
+          activeStep === 2 &&
+          localStorage.getItem('preparedInputTemplate')
+        ) {
+          const reader = new FileReader();
+
+          reader.onload = () => {
+            const content = reader.result;
+            const data = JSON.parse(content);
+            // setRawPreparedData(data);
+            console.log(content);
+            localStorage.setItem('preparedRawData', content);
             GeneratePreparedData(data, file, currentFileName);
-            localStorage.setItem('rawData', content);
           };
 
           reader.readAsText(file);
@@ -235,6 +306,7 @@ const Upload = () => {
     //   uploadedWorkbook,
     //   userTemplate,
     // ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [activeStep, mappingDetails, parseFile, selectedConversion, userTemplate]
   );
 
@@ -264,11 +336,14 @@ const Upload = () => {
     multiple: false,
   });
 
-  useEffect(() => {
+  const executeIfDownloadable = () => {
     if (downloadFile) {
       setFinalData(null);
       let finalData;
-      if (selectedConversion === 'raw') {
+      if (
+        localStorage.getItem('selectedConversion') === 'raw' ||
+        selectedConversion === 'raw'
+      ) {
         // finalData = {
         //   magic: 'atMSG',
         //   type: 'DT',
@@ -288,23 +363,22 @@ const Upload = () => {
         //   },
         // };
         const localRawData = JSON.parse(localStorage.getItem('rawData'));
-        finalData = localRawData ? { ...localRawData } : {};
+        const obj = updateObjectWithGivenData(rawInputTemplate, {
+          ...localRawData,
+        });
+
+        // finalData = localRawData ? { ...localRawData } : {};
+        finalData = obj ? obj : {};
+        localStorage.setItem('rawData', JSON.stringify(finalData));
       }
 
       if (selectedConversion === 'prepared') {
+        const localRawData =
+          localStorage.getItem('preparedRawData') &&
+          JSON.parse(localStorage.getItem('preparedRawData'));
         finalData = {
-          type: 'ca.cn.transportation',
-          source: 'A108:SRS-YIT',
-          id: generateGUID(),
-          time: new Date(),
-          datacontenttype: 'application/json',
-          systemTrace: {
-            correlationID: generateGUID(),
-            inboundTimestamp: new Date(),
-            outboundTimestamp: new Date(),
-            messageCreationTimestamp: new Date(),
-            naturalKey: 'CN19999',
-          },
+          ...localRawData,
+
           data: preparedData,
         };
       }
@@ -326,9 +400,12 @@ const Upload = () => {
       }
 
       if (selectedConversion === 'raw' && finalData) {
-        const data = GenerateRawExcel(finalData);
+        console.log(finalData);
+        const data = GenerateRawExcel({ ...finalData });
+        console.log(data);
         setExcelData(data);
         const csvString = convertToCSV(data);
+        console.log(csvString);
         setDownloadableCSVData(csvString);
       }
 
@@ -338,9 +415,14 @@ const Upload = () => {
         const csvString = convertToCSV(data);
         setDownloadableCSVData(csvString);
       }
-
-      setFinalData(finalData);
+      console.log({ ...JSON.parse(JSON.stringify(finalData, null, 2)) });
+      setFinalData(JSON.parse(JSON.stringify(finalData, null, 2)));
     }
+  };
+
+  useEffect(() => {
+    executeIfDownloadable();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [csvData, downloadFile, mappingDetails, preparedData, selectedConversion]);
 
   useEffect(() => {
@@ -365,6 +447,7 @@ const Upload = () => {
 
   const onConversionHandler = (event) => {
     setSelectedConversion(event.target.value);
+    localStorage.setItem('selectedConversion', event.target.value);
   };
 
   const onTemplateHandler = (event) => {
@@ -372,17 +455,17 @@ const Upload = () => {
   };
 
   let dragDropText = '';
-  let dragDropLabel = '';
+  // let dragDropLabel = '';
 
   if (selectedConversion === 'raw') {
     dragDropText = (
       <p>Drag 'n' drop csv file here, or click to select csv file</p>
     );
-    dragDropLabel = <p>Please select CSV file</p>;
+    // dragDropLabel = <p>Please select CSV file</p>;
   }
 
   if (selectedConversion === 'prepared' && selectedTemplate === 'no') {
-    dragDropLabel = <p>Please create teamplate mapping</p>;
+    // dragDropLabel = <p>Please create teamplate mapping</p>;
   }
 
   if (
@@ -393,7 +476,7 @@ const Upload = () => {
     dragDropText = (
       <p>Drag 'n' drop template file here, or click to select template file</p>
     );
-    dragDropLabel = <p>Please select template file</p>;
+    // dragDropLabel = <p>Please select template file</p>;
   }
 
   if (
@@ -408,7 +491,7 @@ const Upload = () => {
         template file
       </p>
     );
-    dragDropLabel = <p>Please select excel template file</p>;
+    // dragDropLabel = <p>Please select excel template file</p>;
   } else if (
     selectedConversion === 'prepared' &&
     (selectedTemplate === 'yes' || userTemplate)
@@ -416,7 +499,7 @@ const Upload = () => {
     dragDropText = (
       <p>Drag 'n' drop raw file here, or click to select raw file</p>
     );
-    dragDropLabel = <p>Please select raw file</p>;
+    // dragDropLabel = <p>Please select raw file</p>;
   }
 
   const nextDisabled = () => {
@@ -447,15 +530,56 @@ const Upload = () => {
     const template = userTemplate ?? localStorage.getItem('templateMapping');
     const convertedData = convertToJsonMapper(data, JSON.parse(template));
     // const { mappingDetails, converted } = convertedData;
+    console.log(convertedData);
     setMappingDetails(convertedData?.mappingDetails);
     setPreparedData(convertedData?.converted);
     setDownloadFile(true);
-    setRawFileName(
-      file?.name ??
-        'Raw data content selected from previous step. Please select different raw if needed'
-    );
+    setRawFileName(file?.name ?? '');
     setShowDownloadButtons(false);
     setFileName(`${currentFileName ?? 'raw'}-event-prepared-v1-0.json`);
+  };
+
+  const handleProceedToUploadRawCSV = () => {
+    if (rawInputTemplate) {
+      try {
+        const obj = JSON.stringify(rawInputTemplate);
+        if (obj) {
+          setIsRawInputTemplateUploaded(true);
+        }
+      } catch (ex) {
+        setIsRawInputTemplateUploaded(false);
+      }
+    }
+  };
+
+  const handleProceedToUploadPreparedRaw = () => {
+    console.log(preparedInputTemplate);
+    if (preparedInputTemplate) {
+      try {
+        const obj = JSON.stringify(preparedInputTemplate);
+        console.log(obj);
+        if (obj) {
+          console.log('inside ');
+          setIsPreparedInputTemplateUploaded(true);
+        }
+      } catch {
+        setIsPreparedInputTemplateUploaded(false);
+      }
+      console.log(isPreparedInputTemplateUploaded);
+    }
+  };
+
+  const handleUploadRawTemplate = () => {
+    setIsRawInputTemplateUploaded(false);
+    localStorage.removeItem('rawInputTemplate');
+    setRawInputTemplate(null);
+  };
+
+  const handleUploadInputeTemplate = () => {
+    setIsPreparedInputTemplateUploaded(false);
+    localStorage.removeItem('preparedInputTemplate');
+    localStorage.removeItem('preparedRawData');
+    setPreparedInputTemplate(null);
   };
 
   return (
@@ -593,12 +717,10 @@ const Upload = () => {
                       )}
                     </div>
                     <div>
-                      {(selectedConversion === 'raw' ||
-                        (selectedConversion === 'prepared' &&
-                          selectedTemplate === 'yes')) &&
+                      {selectedConversion === 'prepared' &&
                         downloadExcelFile &&
                         userTemplate &&
-                        !uploadedWorkbook && (
+                        activeStep === 1 && (
                           <div
                             {...getRootProps({
                               className: `dropzone 
@@ -633,36 +755,83 @@ const Upload = () => {
                               `You have selected raw template file: ${rawFileName}`}
                           </p>
                         </div>
-                        <div className="raw-layout">
-                          <div
-                            {...getRootProps({
-                              className: `dropzone 
+                        {!isPreparedInputTemplateUploaded && (
+                          <>
+                            <div className="raw-layout">
+                              <div
+                                {...getRootProps({
+                                  className: `dropzone 
           ${isDragAccept && 'dropzoneAccept'} 
           ${isDragReject && 'dropzoneReject'}`,
-                            })}
-                          >
-                            <input
-                              {...getInputProps()}
-                              onClick={() => setDownloadFile(false)}
-                            />
-                            {isDragActive ? (
-                              <p>Drop the files here ...</p>
-                            ) : (
-                              dragDropText
-                            )}
-                          </div>
-                          <RawTemplate
-                            data={
-                              rawPreparedData?.data
-                                ? rawPreparedData
-                                : JSON.parse(
-                                    localStorage.getItem('rawData'),
-                                    null,
-                                    2
+                                })}
+                              >
+                                <input
+                                  {...getInputProps()}
+                                  onClick={() => setDownloadFile(false)}
+                                />
+                                {isDragActive ? (
+                                  <p>Drop the files here ...</p>
+                                ) : (
+                                  `Drag 'n' drop prepared template file here, or click to select prepared file`
+                                )}
+                              </div>
+                              <RawTemplate
+                                data={preparedInputTemplate}
+                                storageKey={'preparedInputTemplate'}
+                              />
+                            </div>
+                            <div>
+                              <button
+                                className="step-button"
+                                style={{ marginLeft: '8px' }}
+                                onClick={handleProceedToUploadPreparedRaw}
+                              >
+                                Proceed to upload prepare raw
+                              </button>
+                            </div>
+                          </>
+                        )}
+                        {isPreparedInputTemplateUploaded && (
+                          <>
+                            <div className="raw-layout">
+                              <div
+                                {...getRootProps({
+                                  className: `dropzone 
+          ${isDragAccept && 'dropzoneAccept'} 
+          ${isDragReject && 'dropzoneReject'}`,
+                                })}
+                              >
+                                <input
+                                  {...getInputProps()}
+                                  onClick={() => setDownloadFile(false)}
+                                />
+                                {isDragActive ? (
+                                  <p>Drop the files here ...</p>
+                                ) : (
+                                  dragDropText
+                                )}
+                              </div>
+                              <RawTemplate
+                                data={
+                                  localStorage.getItem('preparedRawData') &&
+                                  JSON.parse(
+                                    localStorage.getItem('preparedRawData')
                                   )
-                            }
-                          />
-                        </div>
+                                }
+                                storageKey={'preparedRawData'}
+                              />
+                            </div>
+                            <div>
+                              <button
+                                className="step-button"
+                                style={{ marginLeft: '8px' }}
+                                onClick={handleUploadInputeTemplate}
+                              >
+                                Back to upload prepared template
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
                     {selectedConversion === 'prepared' && (
@@ -843,24 +1012,80 @@ const Upload = () => {
           )}
         </div>
         <div>
-          {selectedConversion === 'raw' && (
-            <div className="raw-layout">
-              <div
-                {...getRootProps({
-                  className: `dropzone 
+          {selectedConversion === 'raw' && !isRawInputTemplateUploaded && (
+            <>
+              <div className="raw-layout">
+                <div
+                  {...getRootProps({
+                    className: `dropzone 
           ${isDragAccept && 'dropzoneAccept'} 
           ${isDragReject && 'dropzoneReject'}`,
-                })}
-              >
-                <input
-                  {...getInputProps()}
-                  onClick={() => setDownloadFile(false)}
+                  })}
+                >
+                  <input
+                    {...getInputProps()}
+                    onClick={() => setDownloadFile(false)}
+                  />
+                  {isDragActive ? (
+                    <p>Drop the files here ...</p>
+                  ) : (
+                    `Drag 'n' drop raw template file here, or click to select raw file`
+                  )}
+                </div>
+                <RawTemplate
+                  data={rawInputTemplate}
+                  storageKey={'rawInputTemplate'}
                 />
-                {isDragActive ? <p>Drop the files here ...</p> : dragDropText}
               </div>
-              <RawTemplate data={{ data: csvData ? csvData[0] : {} }} />
-            </div>
+              <div>
+                <button
+                  className="step-button"
+                  style={{ marginLeft: '8px' }}
+                  onClick={handleProceedToUploadRawCSV}
+                >
+                  Proceed to upload raw csv
+                </button>
+              </div>
+            </>
           )}
+          {selectedConversion === 'raw' &&
+            rawInputTemplate &&
+            isRawInputTemplateUploaded && (
+              <>
+                <div className="raw-layout">
+                  <div
+                    {...getRootProps({
+                      className: `dropzone 
+          ${isDragAccept && 'dropzoneAccept'} 
+          ${isDragReject && 'dropzoneReject'}`,
+                    })}
+                  >
+                    <input
+                      {...getInputProps()}
+                      onClick={() => setDownloadFile(false)}
+                    />
+                    {isDragActive ? (
+                      <p>Drop the files here ...</p>
+                    ) : (
+                      dragDropText
+                    )}
+                  </div>
+                  <RawTemplate
+                    data={{ data: csvData ? csvData[0] : {} }}
+                    storageKey={'rawData'}
+                  />
+                </div>
+                <div>
+                  <button
+                    className="step-button"
+                    style={{ marginLeft: '8px' }}
+                    onClick={handleUploadRawTemplate}
+                  >
+                    Back to upload raw input template
+                  </button>
+                </div>
+              </>
+            )}
         </div>
         {selectedConversion === 'raw' && (
           <div className="conversionDropDown">

@@ -1,19 +1,24 @@
+import { getDataObject } from './convertToJsonMapper';
+
 const GenerateRawExcel = (data) => {
   if (data) {
     const rawExcelData = [];
-    for (const [key, value] of Object.entries(data?.data)) {
-      const data = {
-        Raw: key,
-        DataType: `${typeof value}`,
-        'Destinamtion Nullable': 'Yes',
-        Example: value,
-        Source: key,
-        'Source Nullable': 'Yes',
-      };
+    const obj = getDataObject(data);
+    if (obj) {
+      for (const [key, value] of Object.entries(obj)) {
+        const data = {
+          Raw: key,
+          DataType: `${typeof value}`,
+          'Destinamtion Nullable': 'Yes',
+          Example: value,
+          Source: key,
+          'Source Nullable': 'Yes',
+        };
 
-      rawExcelData.push(data);
+        rawExcelData.push(data);
+      }
+      return rawExcelData;
     }
-    return rawExcelData;
   }
 };
 
