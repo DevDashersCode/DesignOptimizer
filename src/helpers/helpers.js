@@ -1,3 +1,5 @@
+import { getDataObject } from './convertToJsonMapper';
+
 export function updateObjectWithGivenData(originalObject, givenData) {
   // Recursive function to update 'data' key at any nesting level
   function updateDataKey(obj, data) {
@@ -7,7 +9,7 @@ export function updateObjectWithGivenData(originalObject, givenData) {
         // If the current property is an object, check for the 'data' key
         if (key === 'data') {
           // Merge the 'data' key with the given data
-          obj[key] = Object.assign(obj[key], data?.data);
+          obj[key] = Object.assign(obj[key], getDataObject(data));
           isUpdated = true;
         } else {
           // Recursively search for the 'data' key in nested objects
