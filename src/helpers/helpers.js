@@ -27,7 +27,7 @@ export function updateObjectWithGivenData(
         }
       }
     }
-    if (!isUpdated) {
+    if (!isUpdated && !getDataObject(obj)) {
       obj = { ...obj, ...data };
     }
 

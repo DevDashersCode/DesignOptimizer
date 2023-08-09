@@ -368,11 +368,14 @@ const Upload = () => {
         const preparedInputTemplateData = JSON.parse(
           localStorage.getItem('preparedInputTemplate')
         );
-        const obj = updateObjectWithGivenData(
-          preparedInputTemplateData,
-          localRawData,
-          true
-        );
+        const obj =
+          localRawData &&
+          preparedInputTemplateData &&
+          updateObjectWithGivenData(
+            preparedInputTemplateData,
+            localRawData,
+            true
+          );
         finalData = obj;
       }
 

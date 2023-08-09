@@ -120,10 +120,49 @@ const convertKeys = (obj, source) => {
   };
 };
 
+// const convertKeys = (obj, source) => {
+//   if (typeof obj !== 'object' || obj === null) {
+//     return { mappingDetails: [], converted: obj };
+//   }
+
+//   const convertedData = [];
+//   const converted = {};
+
+//   for (const key in obj) {
+//     const keyValue = key;
+
+//     if (Array.isArray(source[keyValue])) {
+//       const transformedObject = {};
+//       source[keyValue].forEach((k) => {
+//         const newKey = camelCase(k);
+//         transformedObject[newKey] = obj[key].trim();
+//         convertedData.push({
+//           from: key,
+//           to: newKey,
+//           value: obj[key].trim(),
+//         });
+//       });
+//       converted[key] = transformedObject;
+//     } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+//       const nestedResult = convertKeys(obj[key], source);
+//       converted[key] = nestedResult.converted;
+//       convertedData.push(...nestedResult.mappingDetails);
+//     } else {
+//       converted[key] = obj[key];
+//     }
+//   }
+
+//   return {
+//     mappingDetails: convertedData,
+//     converted,
+//   };
+// };
+
 export const convertToJsonMapper = (data, userTemplate) => {
   const source =
     userTemplate ?? JSON.parse(localStorage.getItem('templateMapping'));
   const dataObj = getDataObject(data);
   const convertedData = convertKeys(dataObj, source);
+  console.log(convertedData);
   return convertedData;
 };
